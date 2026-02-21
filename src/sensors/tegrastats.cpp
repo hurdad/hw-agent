@@ -16,6 +16,11 @@
 namespace hw_agent::sensors {
 
 namespace {
+const std::regex kGpuRe(R"((?:GR3D_FREQ|GPU)\s+(\d+)%)");
+const std::regex kEmcRe(R"(EMC_FREQ\s+(\d+)%)");
+const std::regex kTempRe(R"(([A-Za-z0-9_]+)@(-?\d+(?:\.\d+)?)C)");
+const std::regex kRailRe(R"((VDD_[A-Z0-9_]+)\s+(\d+)mW(?:\/(\d+)mW)?)");
+
 float parse_float(const std::string& value) noexcept {
   const char* begin = value.c_str();
   char* end = nullptr;
@@ -60,7 +65,12 @@ void TegraStatsSensor::sample(model::signal_frame& frame) noexcept {
       while (newline_pos != std::string::npos) {
         std::string line = read_buffer_.substr(0, newline_pos);
         read_buffer_.erase(0, newline_pos + 1);
-        parsed_at_least_one_line = parse_line(line) || parsed_at_least_one_line;
+        try {
+          parsed_at_least_one_line = parse_line(line) || parsed_at_least_one_line;
+        } catch (...) {
+          disable();
+          return;
+        }
         newline_pos = read_buffer_.find('\n');
       }
       continue;
@@ -146,28 +156,23 @@ void TegraStatsSensor::disable() noexcept {
   enabled_ = false;
 }
 
-bool TegraStatsSensor::parse_line(const std::string& line) noexcept {
+bool TegraStatsSensor::parse_line(const std::string& line) {
   bool parsed_any = false;
 
-  static const std::regex gpu_re(R"((?:GR3D_FREQ|GPU)\s+(\d+)%)");
-  static const std::regex emc_re(R"(EMC_FREQ\s+(\d+)%)");
-  static const std::regex temp_re(R"(([A-Za-z0-9_]+)@(-?\d+(?:\.\d+)?)C)");
-  static const std::regex rail_re(R"((VDD_[A-Z0-9_]+)\s+(\d+)mW(?:\/(\d+)mW)?)");
-
   std::smatch match;
-  if (std::regex_search(line, match, gpu_re) && match.size() >= 2) {
+  if (std::regex_search(line, match, kGpuRe) && match.size() >= 2) {
     raw_.gpu_util_pct = static_cast<float>(parse_int_or_zero(match[1].str()));
     parsed_any = true;
   }
 
-  if (std::regex_search(line, match, emc_re) && match.size() >= 2) {
+  if (std::regex_search(line, match, kEmcRe) && match.size() >= 2) {
     raw_.emc_util_pct = static_cast<float>(parse_int_or_zero(match[1].str()));
     parsed_any = true;
   }
 
   float rail_sum = 0.0F;
   bool parsed_rail = false;
-  for (std::sregex_iterator it(line.begin(), line.end(), rail_re), end; it != end; ++it) {
+  for (std::sregex_iterator it(line.begin(), line.end(), kRailRe), end; it != end; ++it) {
     if ((*it).size() < 3) {
       continue;
     }
@@ -185,7 +190,7 @@ bool TegraStatsSensor::parse_line(const std::string& line) noexcept {
   }
 
   bool parsed_temp = false;
-  for (std::sregex_iterator it(line.begin(), line.end(), temp_re), end; it != end; ++it) {
+  for (std::sregex_iterator it(line.begin(), line.end(), kTempRe), end; it != end; ++it) {
     if ((*it).size() < 3) {
       continue;
     }

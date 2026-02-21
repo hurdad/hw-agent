@@ -32,7 +32,7 @@ class TegraStatsSensor {
  private:
   bool launch(std::uint32_t interval_ms) noexcept;
   void disable() noexcept;
-  bool parse_line(const std::string& line) noexcept;
+  bool parse_line(const std::string& line);
 
   int read_fd_{-1};
   int child_pid_{-1};
