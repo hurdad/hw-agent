@@ -17,13 +17,22 @@ Agent::Agent(AgentConfig config)
     sinks::RedisTsOptions options{};
     options.host = config.redis.host;
     options.port = config.redis.port;
+    options.unix_socket = config.redis.unix_socket;
     options.publish_health = config.publish_health;
     redis_sink_ = std::make_unique<sinks::RedisTsSink>(options);
 
     if (redis_sink_->check_connectivity()) {
-      std::cerr << "[agent] redis connectivity confirmed at " << options.host << ':' << options.port << '\n';
+      if (!options.unix_socket.empty()) {
+        std::cerr << "[agent] redis connectivity confirmed at unix://" << options.unix_socket << '\n';
+      } else {
+        std::cerr << "[agent] redis connectivity confirmed at " << options.host << ':' << options.port << '\n';
+      }
     } else {
-      std::cerr << "[agent] redis connectivity check failed at " << options.host << ':' << options.port << '\n';
+      if (!options.unix_socket.empty()) {
+        std::cerr << "[agent] redis connectivity check failed at unix://" << options.unix_socket << '\n';
+      } else {
+        std::cerr << "[agent] redis connectivity check failed at " << options.host << ':' << options.port << '\n';
+      }
     }
   }
 

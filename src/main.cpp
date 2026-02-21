@@ -24,7 +24,13 @@ std::string format_config_settings(const hw_agent::core::AgentConfig& config, co
          << " | publish_health=" << (config.publish_health ? "true" : "false")
          << " | stdout_debug=" << (config.stdout_debug ? "true" : "false")
          << " | redis_enabled=" << (config.redis.enabled ? "true" : "false")
-         << " | redis_address=" << config.redis.host << ':' << config.redis.port;
+         << " | redis_address=";
+
+  if (!config.redis.unix_socket.empty()) {
+    output << "unix://" << config.redis.unix_socket;
+  } else {
+    output << config.redis.host << ':' << config.redis.port;
+  }
   return output.str();
 }
 

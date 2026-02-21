@@ -51,6 +51,12 @@ redisContext* redisConnectWithTimeout(const char*, int, const struct timeval) {
   return context;
 }
 
+redisContext* redisConnectUnixWithTimeout(const char*, const struct timeval) {
+  auto* context = static_cast<redisContext*>(std::calloc(1, sizeof(redisContext)));
+  context->err = REDIS_OK;
+  return context;
+}
+
 void redisFree(redisContext* c) { std::free(c); }
 
 void* redisCommand(redisContext*, const char*, ...) {
@@ -257,6 +263,19 @@ int test_config_parsing_edge_cases() {
 
   if (!invalid_float_threw) {
     return fail("test_config_parsing_edge_cases", "invalid float should throw");
+  }
+
+  const auto unix_socket = std::filesystem::temp_directory_path() / "hw_agent_unix_redis.yaml";
+  {
+    std::ofstream out(unix_socket);
+    out << "redis:\n  address: unix:///var/run/redis/redis.sock\n";
+  }
+
+  const auto unix_config = load_agent_config(unix_socket.string());
+  std::filesystem::remove(unix_socket);
+
+  if (!unix_config.redis.enabled || unix_config.redis.unix_socket != "/var/run/redis/redis.sock") {
+    return fail("test_config_parsing_edge_cases", "unix socket redis address should parse");
   }
 
   const auto missing_redis = std::filesystem::temp_directory_path() / "hw_agent_missing_redis.yaml";

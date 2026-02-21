@@ -14,6 +14,7 @@ namespace hw_agent::sinks {
 struct RedisTsOptions {
   std::string host{"127.0.0.1"};
   std::uint16_t port{6379};
+  std::string unix_socket{};
   std::string password{};
   int db{0};
   std::string key_prefix{"edge:node"};
