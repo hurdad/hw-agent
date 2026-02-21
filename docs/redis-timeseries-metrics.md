@@ -33,7 +33,8 @@ All keys use the configured prefix (default `hw-agent`) and are written as:
 | `raw:disk` | every tick | every 6 ticks (`600 ms`) | `/proc/diskstats` weighted I/O wait estimate. |
 | `raw:network` | every tick | every 7 ticks (`700 ms`) | Interface packet drop ratio. |
 | `raw:gpu_util` | every tick | every 8 ticks (`800 ms`) | GPU core utilization ratio. |
-| `raw:gpu_mem_util` | every tick | every 8 ticks (`800 ms`) | GPU memory utilization ratio. |
+| `raw:gpu_mem_util` | every tick | every 8 ticks (`800 ms`) | GPU memory utilization percentage (`[0,100]`) from backend GPU-memory metrics. |
+| `raw:emc_util` | every tick | every 8 ticks (`800 ms`) | Memory controller/bus utilization percentage (`[0,100]`), Jetson EMC when available. |
 | `raw:gpu_mem_free` | every tick | every 8 ticks (`800 ms`) | Free GPU memory ratio. |
 | `raw:gpu_temp` | every tick | every 8 ticks (`800 ms`) | GPU temperature pressure ratio. |
 | `raw:gpu_clock_ratio` | every tick | every 8 ticks (`800 ms`) | GPU clock headroom ratio. |

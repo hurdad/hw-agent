@@ -73,6 +73,7 @@ class NvmlGpuSensor final : public GpuSensor {
 
     frame.gpu_util = static_cast<float>(util.gpu);
     frame.gpu_mem_util = static_cast<float>(util.memory);
+    frame.emc_util = 0.0F;
     frame.gpu_mem_free = static_cast<float>(memory.free / (1024ULL * 1024ULL));
     frame.gpu_temp = static_cast<float>(temp_c);
     frame.gpu_clock_ratio = max_graphics_clock_mhz_ > 0U
@@ -151,6 +152,7 @@ class NvmlGpuSensor final : public GpuSensor {
   static void set_defaults(SignalFrame& frame) noexcept {
     frame.gpu_util = 0.0F;
     frame.gpu_mem_util = 0.0F;
+    frame.emc_util = 0.0F;
     frame.gpu_mem_free = 0.0F;
     frame.gpu_temp = 0.0F;
     frame.gpu_clock_ratio = 0.0F;

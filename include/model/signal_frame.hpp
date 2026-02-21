@@ -38,7 +38,10 @@ struct signal_frame {
     float disk;
     float network;
     float gpu_util;
+    // GPU memory utilization percentage [0,100], sourced from backend GPU-memory metrics.
     float gpu_mem_util;
+    // Memory controller / external memory bus utilization percentage [0,100] (Jetson EMC on tegrastats).
+    float emc_util;
     float gpu_mem_free;
     float gpu_temp;
     float gpu_clock_ratio;

@@ -96,7 +96,7 @@ void TegraStatsSensor::sample(model::signal_frame& frame) noexcept {
   }
 
   frame.gpu_util = raw_.gpu_util_pct;
-  frame.gpu_mem_util = raw_.emc_util_pct;
+  frame.emc_util = raw_.emc_util_pct;
 
   const auto gpu_temp_it = raw_.temperatures_c.find("GPU");
   if (gpu_temp_it != raw_.temperatures_c.end()) {
