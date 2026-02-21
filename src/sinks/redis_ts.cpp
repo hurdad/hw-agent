@@ -70,7 +70,15 @@ bool RedisTsSink::reconnect() {
   }
 
   context_.reset(raw);
-  return authenticate() && select_db();
+  if (!authenticate()) {
+    context_.reset();
+    return false;
+  }
+  if (!select_db()) {
+    context_.reset();
+    return false;
+  }
+  return true;
 }
 
 bool RedisTsSink::authenticate() {
