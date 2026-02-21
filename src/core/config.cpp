@@ -72,7 +72,12 @@ void apply_key_value(AgentConfig& config, const std::string& key, const std::str
     }
 
     config.redis.host = value.substr(0, split);
-    config.redis.port = static_cast<std::uint16_t>(std::stoi(value.substr(split + 1)));
+    const auto parsed_port = std::stoi(value.substr(split + 1));
+    if (parsed_port <= 0 || parsed_port > 65535) {
+      throw std::runtime_error("redis.address port must be in range 1..65535");
+    }
+
+    config.redis.port = static_cast<std::uint16_t>(parsed_port);
     return;
   }
 
