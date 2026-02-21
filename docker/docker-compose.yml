@@ -29,7 +29,7 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      AGENT_CONFIG: agent.yaml
+      AGENT_CONFIG: ${AGENT_CONFIG:-agent.yaml}
     command:
       - /bin/sh
       - -c
