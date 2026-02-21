@@ -88,7 +88,7 @@ bool TegraStatsSensor::sample(model::signal_frame& frame) noexcept {
         try {
           parsed_at_least_one_line = parse_line(line) || parsed_at_least_one_line;
         } catch (...) {
-          disable();
+          disable_non_blocking();
           return false;
         }
         newline_pos = read_buffer_.find('\n');
@@ -189,6 +189,24 @@ void TegraStatsSensor::disable() noexcept {
   if (child_pid_ > 0) {
     terminate_child_process(child_pid_);
     child_pid_ = -1;
+  }
+
+  enabled_ = false;
+}
+
+void TegraStatsSensor::disable_non_blocking() noexcept {
+  if (read_fd_ >= 0) {
+    close(read_fd_);
+    read_fd_ = -1;
+  }
+
+  if (child_pid_ > 0) {
+    kill(child_pid_, SIGTERM);
+    int status = 0;
+    const pid_t wait_result = waitpid(child_pid_, &status, WNOHANG);
+    if (wait_result == child_pid_ || wait_result < 0) {
+      child_pid_ = -1;
+    }
   }
 
   enabled_ = false;
