@@ -173,6 +173,7 @@ thermal:
 
 agent:
   publish_health: true
+  stdout_debug: false  # set false in production to disable stdout logs
 ```
 
 ---

@@ -52,6 +52,11 @@ void apply_key_value(AgentConfig& config, const std::string& key, const std::str
     return;
   }
 
+  if (key == "agent.stdout_debug") {
+    config.stdout_debug = parse_bool(value);
+    return;
+  }
+
   if (key == "redis.address") {
     const auto split = value.find(':');
     config.redis.enabled = !value.empty();
