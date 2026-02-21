@@ -183,6 +183,76 @@ int test_system_state_hysteresis_transitions() {
   return 0;
 }
 
+int test_system_state_hysteresis_transitions_with_saturation_dominant_signal() {
+  SystemState state;
+  signal_frame frame{};
+
+  frame.realtime_risk = 0.10F;
+  frame.saturation_risk = 0.20F;
+  state.sample(frame);
+  if (frame.state != system_state::STABLE) {
+    return fail("test_system_state_hysteresis_transitions_with_saturation_dominant_signal", "expected STABLE");
+  }
+
+  frame.realtime_risk = 0.10F;
+  frame.saturation_risk = 0.45F;
+  state.sample(frame);
+  if (frame.state != system_state::DEGRADED) {
+    return fail("test_system_state_hysteresis_transitions_with_saturation_dominant_signal", "expected DEGRADED");
+  }
+
+  frame.realtime_risk = 0.10F;
+  frame.saturation_risk = 0.69F;
+  state.sample(frame);
+  if (frame.state != system_state::DEGRADED) {
+    return fail("test_system_state_hysteresis_transitions_with_saturation_dominant_signal", "expected DEGRADED hysteresis");
+  }
+
+  frame.realtime_risk = 0.10F;
+  frame.saturation_risk = 0.70F;
+  state.sample(frame);
+  if (frame.state != system_state::UNSTABLE) {
+    return fail("test_system_state_hysteresis_transitions_with_saturation_dominant_signal", "expected UNSTABLE");
+  }
+
+  frame.realtime_risk = 0.10F;
+  frame.saturation_risk = 0.88F;
+  state.sample(frame);
+  if (frame.state != system_state::CRITICAL) {
+    return fail("test_system_state_hysteresis_transitions_with_saturation_dominant_signal", "expected CRITICAL");
+  }
+
+  frame.realtime_risk = 0.10F;
+  frame.saturation_risk = 0.79F;
+  state.sample(frame);
+  if (frame.state != system_state::CRITICAL) {
+    return fail("test_system_state_hysteresis_transitions_with_saturation_dominant_signal", "expected CRITICAL hysteresis");
+  }
+
+  frame.realtime_risk = 0.10F;
+  frame.saturation_risk = 0.78F;
+  state.sample(frame);
+  if (frame.state != system_state::UNSTABLE) {
+    return fail("test_system_state_hysteresis_transitions_with_saturation_dominant_signal", "expected back to UNSTABLE");
+  }
+
+  frame.realtime_risk = 0.10F;
+  frame.saturation_risk = 0.55F;
+  state.sample(frame);
+  if (frame.state != system_state::DEGRADED) {
+    return fail("test_system_state_hysteresis_transitions_with_saturation_dominant_signal", "expected back to DEGRADED");
+  }
+
+  frame.realtime_risk = 0.10F;
+  frame.saturation_risk = 0.30F;
+  state.sample(frame);
+  if (frame.state != system_state::STABLE) {
+    return fail("test_system_state_hysteresis_transitions_with_saturation_dominant_signal", "expected back to STABLE");
+  }
+
+  return 0;
+}
+
 int test_config_rejects_excessive_tick_rate() {
   const auto config_path = std::filesystem::temp_directory_path() / "hw_agent_config_over_1khz.yaml";
 
@@ -247,6 +317,9 @@ int main() {
     return rc;
   }
   if (int rc = test_system_state_hysteresis_transitions(); rc != 0) {
+    return rc;
+  }
+  if (int rc = test_system_state_hysteresis_transitions_with_saturation_dominant_signal(); rc != 0) {
     return rc;
   }
   if (int rc = test_config_rejects_excessive_tick_rate(); rc != 0) {
