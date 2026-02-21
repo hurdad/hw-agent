@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdio>
+#include <vector>
 
 #include "model/signal_frame.hpp"
 
@@ -17,9 +18,7 @@ class CpuFreqSensor {
   void sample(model::signal_frame& frame) noexcept;
 
  private:
-  static constexpr std::size_t kReadBufferSize = 32768;
-
-  std::FILE* file_{nullptr};
+  std::vector<std::FILE*> files_{};
   float ema_mhz_{0.0F};
   bool has_ema_{false};
 };
