@@ -101,6 +101,7 @@ class Agent {
 
   sinks::StdoutDebugSink stdout_sink_{};
   std::unique_ptr<sinks::RedisTsSink> redis_sink_{};
+  bool redis_was_ok_{true};
 };
 
 }  // namespace hw_agent::core

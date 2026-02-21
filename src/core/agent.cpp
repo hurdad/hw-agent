@@ -136,8 +136,16 @@ void Agent::publish_sinks(AgentStats& stats) {
   }
 
   if (redis_sink_ != nullptr) {
-    if (!redis_sink_->publish(frame_)) {
+    const bool ok = redis_sink_->publish(frame_);
+    if (!ok) {
       ++frame_.agent.redis_errors;
+      if (redis_was_ok_) {
+        std::cerr << "[redis] publish failed\n";
+        redis_was_ok_ = false;
+      }
+    } else if (!redis_was_ok_) {
+      std::cerr << "[redis] publish recovered\n";
+      redis_was_ok_ = true;
     }
   }
 }

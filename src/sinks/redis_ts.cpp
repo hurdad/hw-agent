@@ -2,11 +2,12 @@
 
 #include "core/timestamp.hpp"
 
-#include <chrono>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstring>
+#include <iostream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -75,7 +76,10 @@ bool RedisTsSink::reconnect() {
       redisConnectWithTimeout(options_.host.c_str(), static_cast<int>(options_.port), timeout);
   if (raw == nullptr || raw->err != REDIS_OK) {
     if (raw != nullptr) {
+      std::cerr << "[redis] connect failed: " << raw->errstr << '\n';
       redisFree(raw);
+    } else {
+      std::cerr << "[redis] connect failed: out of memory\n";
     }
     return false;
   }
@@ -107,6 +111,9 @@ bool RedisTsSink::authenticate() {
     return false;
   }
   const bool ok = reply->type != REDIS_REPLY_ERROR;
+  if (!ok) {
+    std::cerr << "[redis] AUTH rejected\n";
+  }
   freeReplyObject(reply);
   return ok;
 }
@@ -185,10 +192,12 @@ bool RedisTsSink::ensure_schema() {
     freeReplyObject(reply);
 
     if (unknown_command) {
+      std::cerr << "[redis] RedisTimeSeries module not available (TS.CREATE unknown command)\n";
       timeseries_available_ = false;
       return false;
     }
     if (!ok) {
+      std::cerr << "[redis] schema error on TS.CREATE " << key << ": " << (reply->str ? reply->str : "unknown") << '\n';
       return false;
     }
   }
