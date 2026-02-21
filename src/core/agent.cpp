@@ -38,6 +38,7 @@ void Agent::collect_sensors(AgentStats& stats) {
   memory_sensor_.sample(frame_);
   disk_sensor_.sample(frame_);
   network_sensor_.sample(frame_);
+  tegrastats_sensor_.sample(frame_);
   thermal_sensor_.sample(frame_);
   power_sensor_.sample(frame_);
 

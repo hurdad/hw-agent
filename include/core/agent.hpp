@@ -22,6 +22,7 @@
 #include "sensors/power.hpp"
 #include "sensors/psi.hpp"
 #include "sensors/softirqs.hpp"
+#include "sensors/tegrastats.hpp"
 #include "sensors/thermal.hpp"
 #include "sinks/stdout_debug.hpp"
 
@@ -57,6 +58,7 @@ class Agent {
   sensors::MemorySensor memory_sensor_{};
   sensors::DiskSensor disk_sensor_{};
   sensors::NetworkSensor network_sensor_{};
+  sensors::TegraStatsSensor tegrastats_sensor_{};
   sensors::ThermalSensor thermal_sensor_{};
   sensors::PowerSensor power_sensor_{};
 
