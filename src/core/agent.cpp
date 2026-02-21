@@ -2,11 +2,94 @@
 
 #include <cmath>
 #include <iostream>
+#include <string>
 #include <thread>
+#include <vector>
 
 #include "core/timestamp.hpp"
 
 namespace hw_agent::core {
+namespace {
+
+bool is_sensor_enabled(const AgentConfig& config, const std::string& name) {
+  const auto it = config.sensor_enabled.find(name);
+  if (it == config.sensor_enabled.end()) {
+    return true;
+  }
+  return it->second;
+}
+
+std::vector<std::string> enabled_redis_metrics(const AgentConfig& config) {
+  std::vector<std::string> metrics = {
+      "derived:scheduler_pressure", "derived:memory_pressure", "derived:io_pressure",   "derived:thermal_pressure",
+      "derived:power_pressure",    "derived:latency_jitter",  "risk:realtime_risk",     "risk:saturation_risk",
+      "risk:state",
+  };
+
+  if (is_sensor_enabled(config, "psi")) {
+    metrics.push_back("raw:psi");
+    metrics.push_back("raw:psi_memory");
+    metrics.push_back("raw:psi_io");
+  }
+  if (is_sensor_enabled(config, "cpu")) {
+    metrics.push_back("raw:cpu");
+  }
+  if (is_sensor_enabled(config, "interrupts")) {
+    metrics.push_back("raw:irq");
+  }
+  if (is_sensor_enabled(config, "softirqs")) {
+    metrics.push_back("raw:softirqs");
+  }
+  if (is_sensor_enabled(config, "memory")) {
+    metrics.push_back("raw:memory");
+  }
+  if (is_sensor_enabled(config, "thermal")) {
+    metrics.push_back("raw:thermal");
+  }
+  if (is_sensor_enabled(config, "cpufreq")) {
+    metrics.push_back("raw:cpufreq");
+  }
+  if (is_sensor_enabled(config, "cpu_throttle")) {
+    metrics.push_back("raw:cpu_throttle_ratio");
+  }
+  if (is_sensor_enabled(config, "disk")) {
+    metrics.push_back("raw:disk");
+  }
+  if (is_sensor_enabled(config, "network")) {
+    metrics.push_back("raw:network");
+  }
+
+  const bool gpu_enabled = is_sensor_enabled(config, "gpu");
+  const bool tegrastats_enabled = is_sensor_enabled(config, "tegrastats");
+  if (gpu_enabled || tegrastats_enabled) {
+    metrics.push_back("raw:gpu_util");
+    metrics.push_back("raw:gpu_temp");
+    metrics.push_back("raw:gpu_power_ratio");
+  }
+  if (gpu_enabled) {
+    metrics.push_back("raw:gpu_mem_util");
+    metrics.push_back("raw:gpu_mem_free");
+    metrics.push_back("raw:gpu_clock_ratio");
+    metrics.push_back("raw:gpu_throttle");
+  }
+  if (tegrastats_enabled) {
+    metrics.push_back("raw:emc_util");
+  }
+
+  if (config.publish_health) {
+    metrics.push_back("agent:heartbeat");
+    metrics.push_back("agent:loop_jitter");
+    metrics.push_back("agent:compute_time");
+    metrics.push_back("agent:redis_latency");
+    metrics.push_back("agent:redis_errors");
+    metrics.push_back("agent:sensor_failures");
+    metrics.push_back("agent:missed_cycles");
+  }
+
+  return metrics;
+}
+
+}  // namespace
 
 Agent::Agent(AgentConfig config)
     : tick_interval_(config.tick_interval),
@@ -20,6 +103,7 @@ Agent::Agent(AgentConfig config)
     options.port = config.redis.port;
     options.unix_socket = config.redis.unix_socket;
     options.publish_health = config.publish_health;
+    options.enabled_metrics = enabled_redis_metrics(config);
     redis_sink_ = std::make_unique<sinks::RedisTsSink>(options);
 
     if (redis_sink_->check_connectivity()) {

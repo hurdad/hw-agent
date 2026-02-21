@@ -2,13 +2,13 @@
 
 #include "core/timestamp.hpp"
 
-#include <array>
 #include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstring>
 #include <iostream>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -33,9 +33,53 @@ void add_metric_args(std::vector<std::string>& args, const std::string& key_pref
   args.emplace_back(std::to_string(value));
 }
 
+const std::vector<std::string>& default_metric_suffixes() {
+  static const std::vector<std::string> kMetricSuffixes = {
+      "raw:psi",
+      "raw:psi_memory",
+      "raw:psi_io",
+      "raw:cpu",
+      "raw:irq",
+      "raw:softirqs",
+      "raw:memory",
+      "raw:thermal",
+      "raw:cpufreq",
+      "raw:cpu_throttle_ratio",
+      "raw:disk",
+      "raw:network",
+      "raw:gpu_util",
+      "raw:gpu_mem_util",
+      "raw:emc_util",
+      "raw:gpu_mem_free",
+      "raw:gpu_temp",
+      "raw:gpu_clock_ratio",
+      "raw:gpu_power_ratio",
+      "raw:gpu_throttle",
+      "derived:scheduler_pressure",
+      "derived:memory_pressure",
+      "derived:io_pressure",
+      "derived:thermal_pressure",
+      "derived:power_pressure",
+      "derived:latency_jitter",
+      "risk:realtime_risk",
+      "risk:saturation_risk",
+      "risk:state",
+      "agent:heartbeat",
+      "agent:loop_jitter",
+      "agent:compute_time",
+      "agent:redis_latency",
+      "agent:redis_errors",
+      "agent:sensor_failures",
+      "agent:missed_cycles",
+  };
+  return kMetricSuffixes;
+}
+
 }  // namespace
 
 RedisTsSink::RedisTsSink(RedisTsOptions options) : options_(std::move(options)) {
+  enabled_metrics_ = options_.enabled_metrics.empty() ? default_metric_suffixes() : options_.enabled_metrics;
+  enabled_metric_set_ = std::unordered_set<std::string>(enabled_metrics_.begin(), enabled_metrics_.end());
   reserve_command_buffers();
 }
 
@@ -141,46 +185,7 @@ bool RedisTsSink::ensure_schema() {
     return true;
   }
 
-  static constexpr std::array<const char*, kMetricCountBase + kMetricCountHealth> kMetricSuffixes = {
-      "raw:psi",
-      "raw:psi_memory",
-      "raw:psi_io",
-      "raw:cpu",
-      "raw:irq",
-      "raw:softirqs",
-      "raw:memory",
-      "raw:thermal",
-      "raw:cpufreq",
-      "raw:cpu_throttle_ratio",
-      "raw:disk",
-      "raw:network",
-      "raw:gpu_util",
-      "raw:gpu_mem_util",
-      "raw:emc_util",
-      "raw:gpu_mem_free",
-      "raw:gpu_temp",
-      "raw:gpu_clock_ratio",
-      "raw:gpu_power_ratio",
-      "raw:gpu_throttle",
-      "derived:scheduler_pressure",
-      "derived:memory_pressure",
-      "derived:io_pressure",
-      "derived:thermal_pressure",
-      "derived:power_pressure",
-      "derived:latency_jitter",
-      "risk:realtime_risk",
-      "risk:saturation_risk",
-      "risk:state",
-      "agent:heartbeat",
-      "agent:loop_jitter",
-      "agent:compute_time",
-      "agent:redis_latency",
-      "agent:redis_errors",
-      "agent:sensor_failures",
-      "agent:missed_cycles",
-  };
-
-  for (const char* suffix : kMetricSuffixes) {
+  for (const auto& suffix : enabled_metrics_) {
     const std::string key = options_.key_prefix + ":" + suffix;
     redisReply* reply = static_cast<redisReply*>(
         redisCommand(context_.get(), "TS.CREATE %s DUPLICATE_POLICY LAST", key.c_str()));
@@ -235,6 +240,9 @@ bool RedisTsSink::publish_impl(model::signal_frame& frame) {
   command_args_.emplace_back("TS.MADD");
 
   const auto append_metric = [&](const char* suffix, const double value) {
+    if (enabled_metric_set_.find(suffix) == enabled_metric_set_.end()) {
+      return;
+    }
     add_metric_args(command_args_, options_.key_prefix, timestamp_ms, suffix, value);
   };
 
