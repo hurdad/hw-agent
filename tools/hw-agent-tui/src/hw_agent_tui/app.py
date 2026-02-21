@@ -10,6 +10,9 @@ from hw_agent_tui.redis.collectors import collect_hw_metrics, group_hw_metrics
 from hw_agent_tui.ui.screens.dashboard import format_dashboard
 
 
+DEFAULT_METRIC_PREFIX = "edge:node"
+
+
 class DashboardApp(App[None]):
     BINDINGS = [("q", "quit", "Quit"), ("r", "refresh", "Refresh")]
 
@@ -32,8 +35,9 @@ class DashboardApp(App[None]):
 
     def _collect(self) -> dict[str, dict[str, float]]:
         client = make_client()
-        metrics = collect_hw_metrics(client)
-        return group_hw_metrics(metrics)
+        metric_prefix = os.getenv("HW_AGENT_METRIC_PREFIX", DEFAULT_METRIC_PREFIX)
+        metrics = collect_hw_metrics(client, prefix=metric_prefix)
+        return group_hw_metrics(metrics, prefix=metric_prefix)
 
 
 def run() -> None:

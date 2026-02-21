@@ -9,7 +9,7 @@ def collect_info(client: Redis) -> dict[str, Any]:
     return client.info()
 
 
-def collect_hw_metrics(client: Redis, prefix: str = "hw-agent") -> dict[str, float]:
+def collect_hw_metrics(client: Redis, prefix: str = "edge:node") -> dict[str, float]:
     metrics: dict[str, float] = {}
     keys = sorted(client.scan_iter(match=f"{prefix}:*"))
 
@@ -31,7 +31,7 @@ def collect_hw_metrics(client: Redis, prefix: str = "hw-agent") -> dict[str, flo
     return metrics
 
 
-def group_hw_metrics(metrics: Mapping[str, float], prefix: str = "hw-agent") -> dict[str, dict[str, float]]:
+def group_hw_metrics(metrics: Mapping[str, float], prefix: str = "edge:node") -> dict[str, dict[str, float]]:
     grouped: dict[str, dict[str, float]] = {}
     prefix_with_sep = f"{prefix}:"
 
