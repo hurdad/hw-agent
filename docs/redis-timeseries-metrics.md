@@ -23,6 +23,8 @@ All keys use the configured prefix (default `hw-agent`) and are written as:
 | Redis key suffix | Published every | Source refresh cadence | Notes |
 | --- | --- | --- | --- |
 | `raw:psi` | every tick (`100 ms`) | every 1 tick (`100 ms`) | From PSI CPU avg10 (`/proc/pressure/cpu`). |
+| `raw:psi_memory` | every tick | every 1 tick (`100 ms`) | From PSI memory avg10 (`/proc/pressure/memory`). |
+| `raw:psi_io` | every tick | every 1 tick (`100 ms`) | From PSI I/O avg10 (`/proc/pressure/io`). |
 | `raw:cpu` | every tick | every 2 ticks (`200 ms`) | Overwritten by `CpuSensor` every 2 ticks; initially seeded by PSI when that sensor runs. |
 | `raw:irq` | every tick | every 3 ticks (`300 ms`) | From `/proc/stat` interrupts delta rate. |
 | `raw:softirqs` | every tick | every 4 ticks (`400 ms`) | From `/proc/stat` softirq delta rate. |
@@ -32,14 +34,14 @@ All keys use the configured prefix (default `hw-agent`) and are written as:
 | `raw:power` | every tick | every 10 ticks (`1000 ms`) | CPU policy throttle ratio. |
 | `raw:disk` | every tick | every 6 ticks (`600 ms`) | `/proc/diskstats` weighted I/O wait estimate. |
 | `raw:network` | every tick | every 7 ticks (`700 ms`) | Interface packet drop ratio. |
-| `raw:gpu_util` | every tick | every 8 ticks (`800 ms`) | GPU core utilization ratio. |
-| `raw:gpu_mem_util` | every tick | every 8 ticks (`800 ms`) | GPU memory utilization percentage (`[0,100]`) from backend GPU-memory metrics. |
-| `raw:emc_util` | every tick | every 8 ticks (`800 ms`) | Memory controller/bus utilization percentage (`[0,100]`), Jetson EMC when available. |
-| `raw:gpu_mem_free` | every tick | every 8 ticks (`800 ms`) | Free GPU memory ratio. |
-| `raw:gpu_temp` | every tick | every 8 ticks (`800 ms`) | GPU temperature pressure ratio. |
-| `raw:gpu_clock_ratio` | every tick | every 8 ticks (`800 ms`) | GPU clock headroom ratio. |
-| `raw:gpu_power_ratio` | every tick | every 8 ticks (`800 ms`) | GPU power headroom ratio. |
-| `raw:gpu_throttle` | every tick | every 8 ticks (`800 ms`) | GPU throttle/thermal-limited ratio. |
+| `raw:gpu_util` | every tick | every 8 ticks (`800 ms`) and every 12 ticks (`1200 ms`) | Updated by both `TegraStatsSensor` and NVML GPU sensor (when available). |
+| `raw:gpu_mem_util` | every tick | every 12 ticks (`1200 ms`) | GPU memory utilization percentage (`[0,100]`) from NVML backend metrics. |
+| `raw:emc_util` | every tick | every 8 ticks (`800 ms`) and every 12 ticks (`1200 ms`) | Jetson EMC from tegrastats; NVML path sets `0` when sampled. |
+| `raw:gpu_mem_free` | every tick | every 12 ticks (`1200 ms`) | Free GPU memory in MiB from NVML backend metrics. |
+| `raw:gpu_temp` | every tick | every 8 ticks (`800 ms`) and every 12 ticks (`1200 ms`) | Updated by both tegrastats and NVML when available. |
+| `raw:gpu_clock_ratio` | every tick | every 12 ticks (`1200 ms`) | GPU clock headroom ratio from NVML. |
+| `raw:gpu_power_ratio` | every tick | every 8 ticks (`800 ms`) and every 12 ticks (`1200 ms`) | Total rail power (tegrastats) or normalized NVML power ratio. |
+| `raw:gpu_throttle` | every tick | every 12 ticks (`1200 ms`) | GPU throttle/thermal-limited ratio from NVML throttle reasons. |
 
 ## Derived metrics
 
