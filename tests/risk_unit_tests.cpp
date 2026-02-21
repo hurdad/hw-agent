@@ -1,14 +1,19 @@
 #include <cmath>
 #include <cstdlib>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <stdexcept>
 
 #include "model/signal_frame.hpp"
+#include "core/config.hpp"
 #include "risk/realtime_risk.hpp"
 #include "risk/saturation_risk.hpp"
 #include "risk/system_state.hpp"
 
 using hw_agent::model::signal_frame;
 using hw_agent::model::system_state;
+using hw_agent::core::load_agent_config;
 using hw_agent::risk::RealtimeRisk;
 using hw_agent::risk::SaturationRisk;
 using hw_agent::risk::SystemState;
@@ -178,6 +183,31 @@ int test_system_state_hysteresis_transitions() {
   return 0;
 }
 
+int test_config_rejects_excessive_tick_rate() {
+  const auto config_path = std::filesystem::temp_directory_path() / "hw_agent_config_over_1khz.yaml";
+
+  {
+    std::ofstream out(config_path);
+    out << "tick_rate_hz: 2000\n";
+  }
+
+  bool threw = false;
+  try {
+    (void)load_agent_config(config_path.string());
+  } catch (const std::runtime_error&) {
+    threw = true;
+  }
+
+  std::error_code ec;
+  std::filesystem::remove(config_path, ec);
+
+  if (!threw) {
+    return fail("test_config_rejects_excessive_tick_rate", "expected load_agent_config to reject tick_rate_hz > 1000");
+  }
+
+  return 0;
+}
+
 }  // namespace
 
 int main() {
@@ -191,6 +221,9 @@ int main() {
     return rc;
   }
   if (int rc = test_system_state_hysteresis_transitions(); rc != 0) {
+    return rc;
+  }
+  if (int rc = test_config_rejects_excessive_tick_rate(); rc != 0) {
     return rc;
   }
 
