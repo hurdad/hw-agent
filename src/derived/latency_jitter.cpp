@@ -8,7 +8,7 @@ void LatencyJitter::sample(model::signal_frame& frame) noexcept {
   float temporal_jitter_norm = 0.0F;
 
   if (has_prev_timestamp_) {
-    const std::uint64_t interval = frame.timestamp - prev_timestamp_;
+    const std::uint64_t interval = frame.monotonic_ns - prev_timestamp_;
     intervals_ns_[next_] = interval;
     next_ = (next_ + 1) % kWindow;
     if (count_ < kWindow) {
@@ -32,7 +32,7 @@ void LatencyJitter::sample(model::signal_frame& frame) noexcept {
     }
   }
 
-  prev_timestamp_ = frame.timestamp;
+  prev_timestamp_ = frame.monotonic_ns;
   has_prev_timestamp_ = true;
 
   const float sched_norm = core::clamp01(frame.scheduler_pressure);

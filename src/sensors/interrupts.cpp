@@ -58,16 +58,16 @@ bool InterruptsSensor::sample(model::signal_frame& frame) noexcept {
   if (!has_prev_) {
     has_prev_ = true;
     prev_total_ = total_interrupts;
-    prev_timestamp_ns_ = frame.timestamp;
+    prev_timestamp_ns_ = frame.monotonic_ns;
     frame.irq = 0.0F;
     return true;
   }
 
   const std::uint64_t count_delta = total_interrupts >= prev_total_ ? (total_interrupts - prev_total_) : 0;
-  const std::uint64_t time_delta_ns = frame.timestamp - prev_timestamp_ns_;
+  const std::uint64_t time_delta_ns = frame.monotonic_ns - prev_timestamp_ns_;
 
   prev_total_ = total_interrupts;
-  prev_timestamp_ns_ = frame.timestamp;
+  prev_timestamp_ns_ = frame.monotonic_ns;
 
   if (time_delta_ns == 0) {
     frame.irq = 0.0F;
