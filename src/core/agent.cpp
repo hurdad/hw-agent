@@ -37,10 +37,13 @@ Agent::Agent(AgentConfig config)
 AgentStats Agent::run_for_ticks(const std::size_t total_ticks) {
   AgentStats stats{};
 
-  auto next_wakeup = std::chrono::steady_clock::now();
-  auto previous_cycle_start = next_wakeup;
   for (std::size_t i = 0; total_ticks == 0 || i < total_ticks; ++i) {
     const auto cycle_start = std::chrono::steady_clock::now();
+    if (!schedule_initialized_) {
+      next_wakeup_ = cycle_start;
+      previous_cycle_start_ = cycle_start;
+      schedule_initialized_ = true;
+    }
 
     collect_sensors(stats);
     compute_derived(stats);
@@ -48,16 +51,16 @@ AgentStats Agent::run_for_ticks(const std::size_t total_ticks) {
     publish_sinks(stats);
 
     const auto cycle_end = std::chrono::steady_clock::now();
-    const auto actual_period_ms = std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(cycle_start - previous_cycle_start).count();
+    const auto actual_period_ms = std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(cycle_start - previous_cycle_start_).count();
     const auto compute_ms = std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(cycle_end - cycle_start).count();
     update_agent_health(actual_period_ms, compute_ms);
-    previous_cycle_start = cycle_start;
+    previous_cycle_start_ = cycle_start;
 
     ++stats.ticks_executed;
     sampler_.advance();
 
-    next_wakeup += tick_interval_;
-    std::this_thread::sleep_until(next_wakeup);
+    next_wakeup_ += tick_interval_;
+    std::this_thread::sleep_until(next_wakeup_);
   }
 
   return stats;
