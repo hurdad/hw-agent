@@ -47,6 +47,11 @@ void apply_key_value(AgentConfig& config, const std::string& key, const std::str
     return;
   }
 
+  if (key == "agent.publish_health") {
+    config.publish_health = parse_bool(value);
+    return;
+  }
+
   if (key == "redis.address") {
     const auto split = value.find(':');
     config.redis.enabled = !value.empty();

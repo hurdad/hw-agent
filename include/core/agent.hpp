@@ -54,7 +54,7 @@ class Agent {
     std::string name;
     std::uint64_t every_ticks;
     bool enabled;
-    std::function<void(model::signal_frame&)> sample;
+    std::function<bool(model::signal_frame&)> sample;
   };
 
   void register_sensors(const AgentConfig& config);
@@ -63,10 +63,12 @@ class Agent {
   void compute_derived(AgentStats& stats);
   void compute_risk(AgentStats& stats);
   void publish_sinks(AgentStats& stats);
+  void update_agent_health(float actual_period_ms, float compute_time_ms);
 
   std::chrono::milliseconds tick_interval_{};
   Sampler sampler_{};
   model::signal_frame frame_{};
+  bool publish_health_{true};
   std::vector<SensorRegistration> sensor_registry_{};
 
   sensors::PsiSensor psi_sensor_{};
