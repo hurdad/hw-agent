@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "model/signal_frame.hpp"
 
@@ -43,9 +44,13 @@ class RedisTsSink {
   bool authenticate();
   bool select_db();
   bool publish_impl(model::signal_frame& frame);
+  void reserve_command_buffers();
 
   RedisTsOptions options_;
   std::unique_ptr<redisContext, ContextDeleter> context_;
+  std::vector<std::string> command_args_;
+  std::vector<const char*> command_argv_;
+  std::vector<std::size_t> command_argv_len_;
 };
 
 }  // namespace hw_agent::sinks
