@@ -66,26 +66,59 @@ It is a **machine state estimator**.
 
 ## Output Data Model
 
-Redis keys:
+Redis key format (`<key_prefix>:<metric_suffix>`):
+
+`key_prefix` defaults to `edge:node` and is configurable in the Redis sink.
+
+Metric suffixes:
 
 ```
-edge:<node>:risk:realtime
-edge:<node>:risk:saturation
+raw:psi
+raw:psi_memory
+raw:psi_io
+raw:cpu
+raw:irq
+raw:softirqs
+raw:memory
+raw:thermal
+raw:cpufreq
+raw:power
+raw:disk
+raw:network
+raw:gpu_util
+raw:gpu_mem_util
+raw:emc_util
+raw:gpu_mem_free
+raw:gpu_temp
+raw:gpu_clock_ratio
+raw:gpu_power_ratio
+raw:gpu_throttle
 
-edge:<node>:pressure:scheduler
-edge:<node>:pressure:memory
-edge:<node>:pressure:io
-edge:<node>:pressure:thermal
-edge:<node>:pressure:power
+derived:scheduler_pressure
+derived:memory_pressure
+derived:io_pressure
+derived:thermal_pressure
+derived:power_pressure
+derived:latency_jitter
 
-edge:<node>:agent:heartbeat
-edge:<node>:agent:loop_jitter
-edge:<node>:agent:compute_time
-edge:<node>:agent:redis_latency
-edge:<node>:agent:redis_errors
-edge:<node>:agent:missed_cycles
-edge:<node>:agent:sensor_failures
+risk:realtime_risk
+risk:saturation_risk
+risk:state
+
+agent:heartbeat
+agent:loop_jitter
+agent:compute_time
+agent:redis_latency
+agent:redis_errors
+agent:sensor_failures
+agent:missed_cycles
 ```
+
+Examples with the default prefix:
+
+* `edge:node:risk:realtime_risk`
+* `edge:node:derived:scheduler_pressure`
+* `edge:node:agent:heartbeat`
 
 The agent publishes every cycle (default 100ms).
 
