@@ -3,6 +3,7 @@ thermal_throttle_temp_c: 84.0
 
 agent:
   publish_health: true
+  stdout_debug: true
 
 redis:
   address: 127.0.0.1:6379

@@ -9,7 +9,10 @@
 namespace hw_agent::core {
 
 Agent::Agent(AgentConfig config)
-    : tick_interval_(config.tick_interval), publish_health_(config.publish_health), thermal_sensor_(config.thermal_throttle_temp_c) {
+    : tick_interval_(config.tick_interval),
+      publish_health_(config.publish_health),
+      publish_stdout_(config.stdout_debug),
+      thermal_sensor_(config.thermal_throttle_temp_c) {
   if (config.redis.enabled) {
     sinks::RedisTsOptions options{};
     options.host = config.redis.host;
@@ -121,7 +124,10 @@ void Agent::compute_risk(AgentStats& stats) {
 
 void Agent::publish_sinks(AgentStats& stats) {
   ++stats.sink_cycles;
-  stdout_sink_.publish(frame_);
+  if (publish_stdout_) {
+    stdout_sink_.publish(frame_);
+  }
+
   if (redis_sink_ != nullptr) {
     redis_sink_->publish(frame_);
   }

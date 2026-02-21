@@ -70,6 +70,7 @@ class Agent {
   Sampler sampler_{};
   model::signal_frame frame_{};
   bool publish_health_{true};
+  bool publish_stdout_{true};
   std::vector<SensorRegistration> sensor_registry_{};
 
   sensors::PsiSensor psi_sensor_{};

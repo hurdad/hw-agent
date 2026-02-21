@@ -17,6 +17,7 @@ struct AgentConfig {
   std::chrono::milliseconds tick_interval{100};
   float thermal_throttle_temp_c{85.0F};
   bool publish_health{true};
+  bool stdout_debug{true};
   RedisConfig redis{};
   std::unordered_map<std::string, bool> sensor_enabled{};
 };
