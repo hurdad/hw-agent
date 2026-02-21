@@ -1,18 +1,8 @@
 #include "derived/latency_jitter.hpp"
+#include "core/math.hpp"
 
 namespace hw_agent::derived {
 
-namespace {
-float clamp01(const float value) {
-  if (value < 0.0F) {
-    return 0.0F;
-  }
-  if (value > 1.0F) {
-    return 1.0F;
-  }
-  return value;
-}
-}  // namespace
 
 void LatencyJitter::sample(model::signal_frame& frame) noexcept {
   float temporal_jitter_norm = 0.0F;
@@ -38,15 +28,15 @@ void LatencyJitter::sample(model::signal_frame& frame) noexcept {
         abs_dev_sum += deviation < 0.0F ? -deviation : deviation;
       }
       const float mad = abs_dev_sum / static_cast<float>(count_);
-      temporal_jitter_norm = clamp01((mad / mean) / 0.25F);
+      temporal_jitter_norm = core::clamp01((mad / mean) / 0.25F);
     }
   }
 
   prev_timestamp_ = frame.timestamp;
   has_prev_timestamp_ = true;
 
-  const float sched_norm = clamp01(frame.scheduler_pressure);
-  const float io_norm = clamp01(frame.io_pressure);
+  const float sched_norm = core::clamp01(frame.scheduler_pressure);
+  const float io_norm = core::clamp01(frame.io_pressure);
   const float raw_score = (0.60F * temporal_jitter_norm) + (0.25F * sched_norm) + (0.15F * io_norm);
 
   if (!has_ema_) {
@@ -57,7 +47,7 @@ void LatencyJitter::sample(model::signal_frame& frame) noexcept {
     ema_ = ((1.0F - alpha) * ema_) + (alpha * raw_score);
   }
 
-  frame.latency_jitter = clamp01(ema_);
+  frame.latency_jitter = core::clamp01(ema_);
 }
 
 }  // namespace hw_agent::derived
