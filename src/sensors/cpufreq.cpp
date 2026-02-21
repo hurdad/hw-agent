@@ -54,16 +54,16 @@ void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
   }
 
   const float current_average_mhz = static_cast<float>(total_mhz / static_cast<double>(count));
+  constexpr float alpha = 0.25F;
 
-  if (!has_prev_) {
-    has_prev_ = true;
-    prev_average_mhz_ = current_average_mhz;
-    frame.cpufreq = 0.0F;
-    return;
+  if (!has_ema_) {
+    has_ema_ = true;
+    ema_mhz_ = current_average_mhz;
+  } else {
+    ema_mhz_ = ((1.0F - alpha) * ema_mhz_) + (alpha * current_average_mhz);
   }
 
-  frame.cpufreq = (prev_average_mhz_ + current_average_mhz) * 0.5F;
-  prev_average_mhz_ = current_average_mhz;
+  frame.cpufreq = ema_mhz_;
 }
 
 }  // namespace hw_agent::sensors
