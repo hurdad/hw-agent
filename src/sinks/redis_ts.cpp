@@ -17,7 +17,7 @@
 namespace hw_agent::sinks {
 namespace {
 
-constexpr std::size_t kMetricCountBase = 29;
+constexpr std::size_t kMetricCountBase = 32;
 constexpr std::size_t kMetricCountHealth = 7;
 constexpr std::size_t kMaxMetricCount = kMetricCountBase + kMetricCountHealth;
 constexpr std::size_t kMaxCommandArgCount = 1 + (kMaxMetricCount * 3);
@@ -47,13 +47,16 @@ const std::vector<std::string>& default_metric_suffixes() {
       "raw:cpu_throttle_ratio",
       "raw:disk",
       "raw:network",
-      "raw:gpu_util",
+      "raw:nvml_gpu_util",
       "raw:gpu_mem_util",
-      "raw:emc_util",
+      "raw:tegra_emc_util",
       "raw:gpu_mem_free",
-      "raw:gpu_temp",
+      "raw:nvml_gpu_temp",
       "raw:gpu_clock_ratio",
-      "raw:gpu_power_ratio",
+      "raw:nvml_gpu_power_ratio",
+      "raw:tegra_gpu_util",
+      "raw:tegra_gpu_temp",
+      "raw:tegra_gpu_power_mw",
       "raw:gpu_throttle",
       "derived:scheduler_pressure",
       "derived:memory_pressure",
@@ -258,13 +261,16 @@ bool RedisTsSink::publish_impl(model::signal_frame& frame) {
   append_metric("raw:cpu_throttle_ratio", sanitize_value(frame.cpu_throttle_ratio));
   append_metric("raw:disk", sanitize_value(frame.disk));
   append_metric("raw:network", sanitize_value(frame.network));
-  append_metric("raw:gpu_util", sanitize_value(frame.gpu_util));
+  append_metric("raw:nvml_gpu_util", sanitize_value(frame.nvml_gpu_util));
   append_metric("raw:gpu_mem_util", sanitize_value(frame.gpu_mem_util));
-  append_metric("raw:emc_util", sanitize_value(frame.emc_util));
+  append_metric("raw:tegra_emc_util", sanitize_value(frame.tegra_emc_util));
   append_metric("raw:gpu_mem_free", sanitize_value(frame.gpu_mem_free));
-  append_metric("raw:gpu_temp", sanitize_value(frame.gpu_temp));
+  append_metric("raw:nvml_gpu_temp", sanitize_value(frame.nvml_gpu_temp));
   append_metric("raw:gpu_clock_ratio", sanitize_value(frame.gpu_clock_ratio));
-  append_metric("raw:gpu_power_ratio", sanitize_value(frame.gpu_power_ratio));
+  append_metric("raw:nvml_gpu_power_ratio", sanitize_value(frame.nvml_gpu_power_ratio));
+  append_metric("raw:tegra_gpu_util", sanitize_value(frame.tegra_gpu_util));
+  append_metric("raw:tegra_gpu_temp", sanitize_value(frame.tegra_gpu_temp));
+  append_metric("raw:tegra_gpu_power_mw", sanitize_value(frame.tegra_gpu_power_mw));
   append_metric("raw:gpu_throttle", sanitize_value(frame.gpu_throttle));
   append_metric("derived:scheduler_pressure", sanitize_value(frame.scheduler_pressure));
   append_metric("derived:memory_pressure", sanitize_value(frame.memory_pressure));

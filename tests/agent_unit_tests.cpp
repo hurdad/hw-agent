@@ -507,7 +507,7 @@ int test_gpu_memory_and_emc_metrics_are_distinct() {
   RedisTsSink sink(options);
   signal_frame frame{};
   frame.gpu_mem_util = 41.0F;
-  frame.emc_util = 73.0F;
+  frame.tegra_emc_util = 73.0F;
 
   if (!sink.publish(frame)) {
     return fail("test_gpu_memory_and_emc_metrics_are_distinct", "publish should succeed with mock redis");
@@ -519,13 +519,13 @@ int test_gpu_memory_and_emc_metrics_are_distinct() {
     if (g_redis_mock.last_argv[i] == "edge:test:raw:gpu_mem_util") {
       found_gpu_mem_util = g_redis_mock.last_argv[i + 2].find("41") != std::string::npos;
     }
-    if (g_redis_mock.last_argv[i] == "edge:test:raw:emc_util") {
+    if (g_redis_mock.last_argv[i] == "edge:test:raw:tegra_emc_util") {
       found_emc_util = g_redis_mock.last_argv[i + 2].find("73") != std::string::npos;
     }
   }
 
   if (!found_gpu_mem_util || !found_emc_util) {
-    return fail("test_gpu_memory_and_emc_metrics_are_distinct", "expected distinct gpu_mem_util and emc_util outputs");
+    return fail("test_gpu_memory_and_emc_metrics_are_distinct", "expected distinct gpu_mem_util and tegra_emc_util outputs");
   }
 
   return 0;
