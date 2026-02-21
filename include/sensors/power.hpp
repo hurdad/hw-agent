@@ -1,7 +1,7 @@
 #pragma once
 
+#include <cstdio>
 #include <cstdint>
-#include <string>
 #include <vector>
 
 #include "model/signal_frame.hpp"
@@ -17,18 +17,25 @@ class PowerSensor {
   };
 
   PowerSensor();
-  ~PowerSensor() = default;
+  ~PowerSensor();
 
   PowerSensor(const PowerSensor&) = delete;
   PowerSensor& operator=(const PowerSensor&) = delete;
+  PowerSensor(PowerSensor&&) = delete;
+  PowerSensor& operator=(PowerSensor&&) = delete;
 
   void sample(model::signal_frame& frame) noexcept;
   const RawFields& raw() const noexcept;
 
  private:
-  static std::uint64_t read_u64_file(const std::string& path) noexcept;
+  struct PolicySource {
+    std::FILE* cur_freq_file{nullptr};
+    std::FILE* max_freq_file{nullptr};
+  };
 
-  std::vector<std::string> policy_paths_{};
+  static std::uint64_t read_u64_file(std::FILE* file) noexcept;
+
+  std::vector<PolicySource> policies_{};
   RawFields raw_{};
 };
 

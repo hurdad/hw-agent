@@ -1,9 +1,6 @@
 #include "sensors/network.hpp"
 
-#include <cerrno>
-#include <cstdlib>
 #include <filesystem>
-#include <fstream>
 
 namespace hw_agent::sensors {
 
@@ -21,19 +18,48 @@ NetworkSensor::NetworkSensor() {
     if (iface == "lo") {
       continue;
     }
-    interfaces_.push_back(iface);
+
+    const std::string base = std::string{kSysClassNet} + "/" + iface + "/statistics/";
+
+    InterfaceSource source{};
+    source.rx_packets_file = std::fopen((base + "rx_packets").c_str(), "r");
+    source.tx_packets_file = std::fopen((base + "tx_packets").c_str(), "r");
+    source.rx_dropped_file = std::fopen((base + "rx_dropped").c_str(), "r");
+    source.tx_dropped_file = std::fopen((base + "tx_dropped").c_str(), "r");
+
+    interfaces_.push_back(source);
+  }
+}
+
+NetworkSensor::~NetworkSensor() {
+  for (InterfaceSource& iface : interfaces_) {
+    if (iface.rx_packets_file != nullptr) {
+      std::fclose(iface.rx_packets_file);
+      iface.rx_packets_file = nullptr;
+    }
+    if (iface.tx_packets_file != nullptr) {
+      std::fclose(iface.tx_packets_file);
+      iface.tx_packets_file = nullptr;
+    }
+    if (iface.rx_dropped_file != nullptr) {
+      std::fclose(iface.rx_dropped_file);
+      iface.rx_dropped_file = nullptr;
+    }
+    if (iface.tx_dropped_file != nullptr) {
+      std::fclose(iface.tx_dropped_file);
+      iface.tx_dropped_file = nullptr;
+    }
   }
 }
 
 void NetworkSensor::sample(model::signal_frame& frame) noexcept {
   raw_ = {};
 
-  for (const std::string& iface : interfaces_) {
-    const std::string base = std::string{kSysClassNet} + "/" + iface + "/statistics/";
-    raw_.rx_packets += read_u64_file(base + "rx_packets");
-    raw_.tx_packets += read_u64_file(base + "tx_packets");
-    raw_.rx_dropped += read_u64_file(base + "rx_dropped");
-    raw_.tx_dropped += read_u64_file(base + "tx_dropped");
+  for (const InterfaceSource& iface : interfaces_) {
+    raw_.rx_packets += read_u64_file(iface.rx_packets_file);
+    raw_.tx_packets += read_u64_file(iface.tx_packets_file);
+    raw_.rx_dropped += read_u64_file(iface.rx_dropped_file);
+    raw_.tx_dropped += read_u64_file(iface.tx_dropped_file);
   }
 
   const std::uint64_t total_packets = raw_.rx_packets + raw_.tx_packets;
@@ -62,17 +88,21 @@ void NetworkSensor::sample(model::signal_frame& frame) noexcept {
 
 const NetworkSensor::RawFields& NetworkSensor::raw() const noexcept { return raw_; }
 
-std::uint64_t NetworkSensor::read_u64_file(const std::string& path) noexcept {
-  std::ifstream input(path);
-  if (!input.is_open()) {
+std::uint64_t NetworkSensor::read_u64_file(std::FILE* file) noexcept {
+  if (file == nullptr) {
+    return 0;
+  }
+
+  if (std::fseek(file, 0L, SEEK_SET) != 0) {
     return 0;
   }
 
   unsigned long long value = 0;
-  input >> value;
-  if (!input.good() && !input.eof()) {
+  if (std::fscanf(file, "%llu", &value) != 1) {
+    std::clearerr(file);
     return 0;
   }
+
   return value;
 }
 
