@@ -30,4 +30,4 @@ WORKDIR /app
 COPY --from=build /src/build/hw_agent /usr/local/bin/hw_agent
 COPY --from=build /src/configs /app/configs
 
-CMD ["/usr/local/bin/hw_agent", "/app/configs/agent.yaml"]
+CMD ["/usr/local/bin/hw_agent", "/app/configs/agent.all.debug.yaml"]

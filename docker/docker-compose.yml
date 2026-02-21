@@ -38,7 +38,7 @@ services:
     pid: host
     environment:
       REDIS_ADDRESS: ${REDIS_ADDRESS:-unix:///var/run/redis/redis.sock}
-      AGENT_CONFIG: ${AGENT_CONFIG:-agent.yaml}
+      AGENT_CONFIG: ${AGENT_CONFIG:-agent.all.debug.yaml}
     volumes:
       - redis-socket:/var/run/redis
     command:
@@ -60,8 +60,8 @@ services:
               exit 1
             }
           }
-        ' "/app/configs/$${AGENT_CONFIG}" > /tmp/agent.yaml
-        while true; do /usr/local/bin/hw_agent /tmp/agent.yaml; sleep 1; done
+        ' "/app/configs/$${AGENT_CONFIG}" > /tmp/agent.all.debug.yaml
+        while true; do /usr/local/bin/hw_agent /tmp/agent.all.debug.yaml; sleep 1; done
     depends_on:
       - redis
 
