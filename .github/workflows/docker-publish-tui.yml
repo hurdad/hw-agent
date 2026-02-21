@@ -7,10 +7,16 @@ on:
       - master
     tags:
       - 'v*'
+    paths:
+      - 'tools/**'
+      - '.github/workflows/docker-publish-tui.yml'
   pull_request:
     branches:
       - main
       - master
+    paths:
+      - 'tools/**'
+      - '.github/workflows/docker-publish-tui.yml'
   workflow_dispatch:
 
 permissions:

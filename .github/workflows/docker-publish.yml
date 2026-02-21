@@ -7,10 +7,14 @@ on:
       - master
     tags:
       - 'v*'
+    paths-ignore:
+      - 'tools/**'
   pull_request:
     branches:
       - main
       - master
+    paths-ignore:
+      - 'tools/**'
   workflow_dispatch:
 
 permissions:
