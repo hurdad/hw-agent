@@ -28,12 +28,24 @@ wait_for_redis
 
 # Source keys published by hw_agent.
 for key in \
+  edge:node:raw:psi \
+  edge:node:raw:cpu \
+  edge:node:raw:irq \
+  edge:node:raw:memory \
+  edge:node:raw:thermal \
+  edge:node:raw:power \
+  edge:node:raw:disk \
+  edge:node:raw:network \
   edge:node:risk:realtime_risk \
   edge:node:risk:saturation_risk \
+  edge:node:risk:state \
   edge:node:derived:scheduler_pressure \
   edge:node:derived:memory_pressure \
   edge:node:derived:io_pressure \
   edge:node:derived:thermal_pressure \
+  edge:node:derived:power_pressure \
+  edge:node:derived:latency_jitter \
+  edge:node:agent:heartbeat \
   edge:node:agent:loop_jitter \
   edge:node:agent:compute_time \
   edge:node:agent:redis_latency \
