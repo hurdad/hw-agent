@@ -121,6 +121,8 @@ bool RedisTsSink::publish_impl(model::signal_frame& frame) {
 
   std::vector<Metric> metrics = {
       {"raw:psi", sanitize_value(frame.psi)},
+      {"raw:psi_memory", sanitize_value(frame.psi_memory)},
+      {"raw:psi_io", sanitize_value(frame.psi_io)},
       {"raw:cpu", sanitize_value(frame.cpu)},
       {"raw:irq", sanitize_value(frame.irq)},
       {"raw:softirqs", sanitize_value(frame.softirqs)},

@@ -28,6 +28,8 @@ struct signal_frame {
 
     // Raw signals.
     float psi;
+    float psi_memory;
+    float psi_io;
     float cpu;
     float irq;
     float softirqs;

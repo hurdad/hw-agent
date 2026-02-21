@@ -9,6 +9,8 @@ namespace hw_agent::sensors {
 PsiSensor::PsiSensor()
     : sources_{{
           {"/proc/pressure/cpu", std::fopen("/proc/pressure/cpu", "r")},
+          {"/proc/pressure/memory", std::fopen("/proc/pressure/memory", "r")},
+          {"/proc/pressure/io", std::fopen("/proc/pressure/io", "r")},
       }} {}
 
 PsiSensor::~PsiSensor() {
@@ -22,10 +24,14 @@ PsiSensor::~PsiSensor() {
 
 void PsiSensor::sample(model::signal_frame& frame) noexcept {
   const float cpu_avg10 = read_avg10(sources_[0]);
+  const float memory_avg10 = read_avg10(sources_[1]);
+  const float io_avg10 = read_avg10(sources_[2]);
 
-  // Keep PSI isolated to its dedicated field; cpu/memory/disk are sampled by
-  // their own sensors and may run on different tick schedules.
+  // Keep frame.psi mapped to CPU PSI for backward compatibility and publish
+  // memory/io PSI in dedicated fields for derived scoring.
   frame.psi = cpu_avg10;
+  frame.psi_memory = memory_avg10;
+  frame.psi_io = io_avg10;
 }
 
 float PsiSensor::read_avg10(Source& source) noexcept {

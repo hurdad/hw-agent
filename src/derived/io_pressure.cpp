@@ -9,7 +9,7 @@ namespace hw_agent::derived {
 void IoPressure::sample(model::signal_frame& frame) noexcept {
   const float disk_norm = core::clamp01(1.0F - std::exp(-frame.disk / 50.0F));
   const float network_norm = core::clamp01(frame.network);
-  const float psi_norm = core::clamp01(frame.psi / 20.0F);
+  const float psi_norm = core::clamp01(frame.psi_io / 20.0F);
 
   const float raw_score = (0.70F * disk_norm) + (0.20F * network_norm) + (0.10F * psi_norm);
 
