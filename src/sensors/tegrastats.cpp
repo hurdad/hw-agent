@@ -154,6 +154,12 @@ bool TegraStatsSensor::launch(const std::uint32_t interval_ms) noexcept {
     dup2(pipe_fds[1], STDOUT_FILENO);
     close(pipe_fds[1]);
 
+    const int devnull_in = open("/dev/null", O_RDONLY);
+    if (devnull_in >= 0) {
+      dup2(devnull_in, STDIN_FILENO);
+      close(devnull_in);
+    }
+
     const int null_fd = open("/dev/null", O_WRONLY);
     if (null_fd >= 0) {
       dup2(null_fd, STDERR_FILENO);
