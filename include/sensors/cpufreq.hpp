@@ -20,8 +20,8 @@ class CpuFreqSensor {
   static constexpr std::size_t kReadBufferSize = 32768;
 
   std::FILE* file_{nullptr};
-  float prev_average_mhz_{0.0F};
-  bool has_prev_{false};
+  float ema_mhz_{0.0F};
+  bool has_ema_{false};
 };
 
 }  // namespace hw_agent::sensors
