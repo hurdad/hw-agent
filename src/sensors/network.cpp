@@ -9,25 +9,33 @@ constexpr const char* kSysClassNet = "/sys/class/net";
 }
 
 NetworkSensor::NetworkSensor() {
-  for (const auto& entry : std::filesystem::directory_iterator(kSysClassNet)) {
-    if (!entry.is_directory()) {
-      continue;
+  try {
+    if (!std::filesystem::exists(kSysClassNet)) {
+      return;
     }
 
-    const std::string iface = entry.path().filename().string();
-    if (iface == "lo") {
-      continue;
+    for (const auto& entry : std::filesystem::directory_iterator(kSysClassNet)) {
+      if (!entry.is_directory()) {
+        continue;
+      }
+
+      const std::string iface = entry.path().filename().string();
+      if (iface == "lo") {
+        continue;
+      }
+
+      const std::string base = std::string{kSysClassNet} + "/" + iface + "/statistics/";
+
+      InterfaceSource source{};
+      source.rx_packets_file = std::fopen((base + "rx_packets").c_str(), "r");
+      source.tx_packets_file = std::fopen((base + "tx_packets").c_str(), "r");
+      source.rx_dropped_file = std::fopen((base + "rx_dropped").c_str(), "r");
+      source.tx_dropped_file = std::fopen((base + "tx_dropped").c_str(), "r");
+
+      interfaces_.push_back(source);
     }
-
-    const std::string base = std::string{kSysClassNet} + "/" + iface + "/statistics/";
-
-    InterfaceSource source{};
-    source.rx_packets_file = std::fopen((base + "rx_packets").c_str(), "r");
-    source.tx_packets_file = std::fopen((base + "tx_packets").c_str(), "r");
-    source.rx_dropped_file = std::fopen((base + "rx_dropped").c_str(), "r");
-    source.tx_dropped_file = std::fopen((base + "tx_dropped").c_str(), "r");
-
-    interfaces_.push_back(source);
+  } catch (const std::filesystem::filesystem_error&) {
+    interfaces_.clear();
   }
 }
 

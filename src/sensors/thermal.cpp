@@ -14,30 +14,38 @@ constexpr const char* kSysClassThermal = "/sys/class/thermal";
 ThermalSensor::ThermalSensor(const float throttle_temp_c) {
   raw_.throttle_temp_c = throttle_temp_c;
 
-  for (const auto& entry : std::filesystem::directory_iterator(kSysClassThermal)) {
-    if (!entry.is_directory()) {
-      continue;
+  try {
+    if (!std::filesystem::exists(kSysClassThermal)) {
+      return;
     }
 
-    const std::string name = entry.path().filename().string();
-    if (name.rfind("thermal_zone", 0) != 0) {
-      continue;
+    for (const auto& entry : std::filesystem::directory_iterator(kSysClassThermal)) {
+      if (!entry.is_directory()) {
+        continue;
+      }
+
+      const std::string name = entry.path().filename().string();
+      if (name.rfind("thermal_zone", 0) != 0) {
+        continue;
+      }
+
+      const std::filesystem::path zone_path = entry.path();
+
+      std::ifstream type_file(zone_path / "type");
+      std::string zone_name = name;
+      if (type_file.is_open()) {
+        std::getline(type_file, zone_name);
+      }
+
+      ZoneSource source{};
+      source.name = zone_name;
+      source.temp_path = (zone_path / "temp").string();
+      source.file = std::fopen(source.temp_path.c_str(), "r");
+
+      zones_.push_back(source);
     }
-
-    const std::filesystem::path zone_path = entry.path();
-
-    std::ifstream type_file(zone_path / "type");
-    std::string zone_name = name;
-    if (type_file.is_open()) {
-      std::getline(type_file, zone_name);
-    }
-
-    ZoneSource source{};
-    source.name = zone_name;
-    source.temp_path = (zone_path / "temp").string();
-    source.file = std::fopen(source.temp_path.c_str(), "r");
-
-    zones_.push_back(source);
+  } catch (const std::filesystem::filesystem_error&) {
+    zones_.clear();
   }
 }
 
