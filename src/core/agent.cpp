@@ -25,7 +25,7 @@ AgentStats Agent::run_for_ticks(const std::size_t total_ticks) {
 
   auto next_wakeup = std::chrono::steady_clock::now();
   auto previous_cycle_start = next_wakeup;
-  for (std::size_t i = 0; i < total_ticks; ++i) {
+  for (std::size_t i = 0; total_ticks == 0 || i < total_ticks; ++i) {
     const auto cycle_start = std::chrono::steady_clock::now();
 
     collect_sensors(stats);
