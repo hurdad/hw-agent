@@ -134,7 +134,8 @@ bool TegraStatsSensor::launch(const std::uint32_t interval_ms) noexcept {
     close(pipe_fds[1]);
 
     const std::string interval = std::to_string(interval_ms);
-    execlp("tegrastats", "tegrastats", "--interval", interval.c_str(), static_cast<char*>(nullptr));
+    constexpr const char* kTegrastatsPath = "/usr/bin/tegrastats";
+    execl(kTegrastatsPath, "tegrastats", "--interval", interval.c_str(), static_cast<char*>(nullptr));
     _exit(127);
   }
 
