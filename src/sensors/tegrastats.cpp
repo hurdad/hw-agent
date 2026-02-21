@@ -119,14 +119,18 @@ bool TegraStatsSensor::sample(model::signal_frame& frame) noexcept {
 
   frame.gpu_util = raw_.gpu_util_pct;
   frame.emc_util = raw_.emc_util_pct;
+  frame.tegra_gpu_util = raw_.gpu_util_pct;
+  frame.tegra_emc_util = raw_.emc_util_pct;
 
   const auto gpu_temp_it = raw_.temperatures_c.find("GPU");
   if (gpu_temp_it != raw_.temperatures_c.end()) {
     frame.gpu_temp = gpu_temp_it->second;
+    frame.tegra_gpu_temp = gpu_temp_it->second;
   }
 
   if (raw_.total_rail_power_mw > 0.0F) {
     frame.gpu_power_ratio = raw_.total_rail_power_mw;
+    frame.tegra_gpu_power_mw = raw_.total_rail_power_mw;
   }
 
   return true;

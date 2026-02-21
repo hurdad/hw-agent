@@ -51,6 +51,14 @@ struct signal_frame {
     float gpu_clock_ratio;
     float gpu_power_ratio;
     float gpu_throttle;
+    // Source-separated GPU metrics for sink naming clarity.
+    float nvml_gpu_util;
+    float nvml_gpu_temp;
+    float nvml_gpu_power_ratio;
+    float tegra_gpu_util;
+    float tegra_emc_util;
+    float tegra_gpu_temp;
+    float tegra_gpu_power_mw;
 
     // Derived signals.
     float scheduler_pressure;

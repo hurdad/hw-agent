@@ -18,6 +18,9 @@ class NoneGpuSensor final : public GpuSensor {
     frame.gpu_clock_ratio = 0.0F;
     frame.gpu_power_ratio = 0.0F;
     frame.gpu_throttle = 0.0F;
+    frame.nvml_gpu_util = 0.0F;
+    frame.nvml_gpu_temp = 0.0F;
+    frame.nvml_gpu_power_ratio = 0.0F;
     return false;
   }
 };

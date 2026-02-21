@@ -61,10 +61,15 @@ std::vector<std::string> enabled_redis_metrics(const AgentConfig& config) {
 
   const bool gpu_enabled = is_sensor_enabled(config, "gpu");
   const bool tegrastats_enabled = is_sensor_enabled(config, "tegrastats");
-  if (gpu_enabled || tegrastats_enabled) {
-    metrics.push_back("raw:gpu_util");
-    metrics.push_back("raw:gpu_temp");
-    metrics.push_back("raw:gpu_power_ratio");
+  if (gpu_enabled) {
+    metrics.push_back("raw:nvml_gpu_util");
+    metrics.push_back("raw:nvml_gpu_temp");
+    metrics.push_back("raw:nvml_gpu_power_ratio");
+  }
+  if (tegrastats_enabled) {
+    metrics.push_back("raw:tegra_gpu_util");
+    metrics.push_back("raw:tegra_gpu_temp");
+    metrics.push_back("raw:tegra_gpu_power_mw");
   }
   if (gpu_enabled) {
     metrics.push_back("raw:gpu_mem_util");
@@ -73,7 +78,7 @@ std::vector<std::string> enabled_redis_metrics(const AgentConfig& config) {
     metrics.push_back("raw:gpu_throttle");
   }
   if (tegrastats_enabled) {
-    metrics.push_back("raw:emc_util");
+    metrics.push_back("raw:tegra_emc_util");
   }
 
   if (config.publish_health) {

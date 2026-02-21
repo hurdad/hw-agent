@@ -72,15 +72,18 @@ class NvmlGpuSensor final : public GpuSensor {
     }
 
     frame.gpu_util = static_cast<float>(util.gpu);
+    frame.nvml_gpu_util = static_cast<float>(util.gpu);
     frame.gpu_mem_util = static_cast<float>(util.memory);
     frame.emc_util = 0.0F;
     frame.gpu_mem_free = static_cast<float>(memory.free / (1024ULL * 1024ULL));
     frame.gpu_temp = static_cast<float>(temp_c);
+    frame.nvml_gpu_temp = static_cast<float>(temp_c);
     frame.gpu_clock_ratio = max_graphics_clock_mhz_ > 0U
                                 ? static_cast<float>(graphics_clock_mhz) / static_cast<float>(max_graphics_clock_mhz_)
                                 : 0.0F;
     frame.gpu_power_ratio = power_limit_mw_ > 0U ? static_cast<float>(power_mw) / static_cast<float>(power_limit_mw_)
                                                  : 0.0F;
+    frame.nvml_gpu_power_ratio = frame.gpu_power_ratio;
     frame.gpu_throttle = throttle_reasons == nvmlClocksThrottleReasonNone ? 0.0F : 1.0F;
 
     return true;
@@ -158,6 +161,9 @@ class NvmlGpuSensor final : public GpuSensor {
     frame.gpu_clock_ratio = 0.0F;
     frame.gpu_power_ratio = 0.0F;
     frame.gpu_throttle = 0.0F;
+    frame.nvml_gpu_util = 0.0F;
+    frame.nvml_gpu_temp = 0.0F;
+    frame.nvml_gpu_power_ratio = 0.0F;
   }
 
   void* library_{nullptr};
