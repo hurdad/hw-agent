@@ -6,7 +6,7 @@
 
 Instead of graphing CPU usage, this agent answers the real question:
 
-> *“Can this node safely run more work right now?”*
+> *"Can this node safely run more work right now?"*
 
 ---
 
@@ -19,16 +19,16 @@ The agent continuously evaluates two independent risks:
 | **realtime_risk**   | Probability latency-sensitive tasks will miss deadlines |
 | **saturation_risk** | Probability system throughput collapse is imminent      |
 
-These signals are derived from kernel behavior — not utilization heuristics.
+These signals are derived from kernel behavior, not utilization heuristics.
 
 ---
 
 ## Why This Exists
 
 Traditional monitoring reports *resource usage*.
-But system failures are caused by *loss of scheduling headroom*.
+System failures are often caused by *loss of scheduling headroom*.
 
-Examples where CPU% lies:
+Examples where CPU% can be misleading:
 
 | Scenario         | CPU | Result               |
 | ---------------- | --- | -------------------- |
@@ -39,14 +39,14 @@ Examples where CPU% lies:
 
 `hw-agent` observes Linux scheduler physics directly:
 
-* PSI (pressure stall information)
-* interrupt bursts
-* reclaim stalls
-* IO latency
-* frequency scaling
-* thermal headroom
+- PSI (pressure stall information)
+- interrupt bursts
+- reclaim stalls
+- I/O latency
+- frequency scaling
+- thermal headroom
 
-Then converts them into actionable risk signals.
+It then converts those signals into actionable risk metrics.
 
 ---
 
@@ -59,7 +59,7 @@ Linux kernel signals
 → RedisTimeSeries signal bus
 → Schedulers / Supervisors / AI
 
-This is not a metrics exporter.
+This is not a generic metrics exporter.
 It is a **machine state estimator**.
 
 ---
@@ -68,11 +68,12 @@ It is a **machine state estimator**.
 
 Redis key format (`<key_prefix>:<metric_suffix>`):
 
-`key_prefix` defaults to `edge:node` and is configurable in the Redis sink.
+- `key_prefix` defaults to `edge:node` and is configurable in the Redis sink.
+- Metric families are `raw:*`, `derived:*`, `risk:*`, and optional `agent:*` health metrics.
 
 Metric suffixes:
 
-```
+```text
 raw:psi
 raw:psi_memory
 raw:psi_io
@@ -116,11 +117,12 @@ agent:missed_cycles
 
 Examples with the default prefix:
 
-* `edge:node:risk:realtime_risk`
-* `edge:node:derived:scheduler_pressure`
-* `edge:node:agent:heartbeat`
+- `edge:node:risk:realtime_risk`
+- `edge:node:derived:scheduler_pressure`
+- `edge:node:agent:heartbeat`
 
-The agent publishes every cycle (default 100ms).
+The agent publishes every cycle (default `100ms` / `tick_rate_hz: 10`).
+For cadence details by metric, see [`docs/redis-timeseries-metrics.md`](docs/redis-timeseries-metrics.md).
 
 ---
 
@@ -128,8 +130,8 @@ The agent publishes every cycle (default 100ms).
 
 Requirements:
 
-* Docker
-* Docker Compose
+- Docker
+- Docker Compose
 
 Run (default profile: `configs/agent.all.debug.yaml`):
 
@@ -156,15 +158,13 @@ AGENT_CONFIG=agent.cpu-discrete-gpu.yaml docker compose -f docker-compose.yml -f
 
 Open Grafana:
 
-```
+```text
 http://localhost:3000
 user: admin
 pass: admin
 ```
 
-You will immediately see the node stability dashboard.
-
-No manual setup required.
+You should immediately see the node stability dashboard.
 
 Run the TUI:
 
@@ -178,10 +178,10 @@ docker run -it --rm --network=host ghcr.io/hurdad/hw-agent-tui:latest
 
 Requirements:
 
-* CMake ≥ 3.16
-* C++20 compiler
-* yaml-cpp
-* hiredis
+- CMake ≥ 3.16
+- C++20 compiler
+- yaml-cpp
+- hiredis
 
 Ubuntu:
 
@@ -206,7 +206,7 @@ Run:
 
 ---
 
-## Configuration
+## Configuration Profiles
 
 The agent ships with four config profiles under `configs/`:
 
@@ -230,19 +230,18 @@ To run without Docker, pass the config file path directly:
 ./hw_agent configs/agent.all.debug.yaml
 ```
 
-To target a specific discrete GPU on multi-GPU systems, set `gpu.device_index` in the config (defaults to `0`).
-
+To target a specific discrete GPU on multi-GPU systems, set `gpu.device_index` in config (defaults to `0`).
 
 ---
 
 ## Design Goals
 
-* Deterministic runtime (single thread)
-* No background workers
-* No allocation in hot path
-* Works without GPU / special hardware
-* Safe for realtime environments
-* Fail-open (never blocks workload)
+- Deterministic runtime (single thread)
+- No background workers
+- No allocations in the hot path
+- Works without GPU / special hardware
+- Safe for realtime environments
+- Fail-open behavior (never blocks workload)
 
 ---
 
@@ -250,7 +249,7 @@ To target a specific discrete GPU on multi-GPU systems, set `gpu.device_index` i
 
 This project does **not** replace Prometheus/Grafana metrics.
 
-It provides a higher level signal:
+It provides a higher-level signal:
 
 > machine stability state
 
@@ -260,12 +259,20 @@ Think of it as a sensor feeding orchestration logic.
 
 ## Example Use Cases
 
-* edge compute schedulers
-* robotics controllers
-* media pipelines
-* inference batching control
-* adaptive rate limiters
-* cluster placement decisions
+- edge compute schedulers
+- robotics controllers
+- media pipelines
+- inference batching control
+- adaptive rate limiters
+- cluster placement decisions
+
+---
+
+## Additional Documentation
+
+- Metric cadence and RedisTimeSeries behavior: [`docs/redis-timeseries-metrics.md`](docs/redis-timeseries-metrics.md)
+- Redis TUI structure notes: [`docs/python-redis-tui-layout.md`](docs/python-redis-tui-layout.md)
+- Redis TUI usage: [`tools/hw-agent-tui/README.md`](tools/hw-agent-tui/README.md)
 
 ---
 
