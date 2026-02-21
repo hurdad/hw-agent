@@ -11,6 +11,9 @@
 #include "derived/scheduler_pressure.hpp"
 #include "derived/thermal_pressure.hpp"
 #include "model/signal_frame.hpp"
+#include "risk/realtime_risk.hpp"
+#include "risk/saturation_risk.hpp"
+#include "risk/system_state.hpp"
 #include "sensors/cpu.hpp"
 #include "sensors/disk.hpp"
 #include "sensors/interrupts.hpp"
@@ -63,6 +66,10 @@ class Agent {
   derived::ThermalPressure thermal_pressure_{};
   derived::PowerPressure power_pressure_{};
   derived::LatencyJitter latency_jitter_{};
+
+  risk::RealtimeRisk realtime_risk_{};
+  risk::SaturationRisk saturation_risk_{};
+  risk::SystemState system_state_{};
 
   sinks::StdoutDebugSink stdout_sink_{};
 };

@@ -55,7 +55,12 @@ void Agent::compute_derived(AgentStats& stats) {
   (void)sampler_.should_sample_every(5);
 }
 
-void Agent::compute_risk(AgentStats& stats) { ++stats.risk_cycles; }
+void Agent::compute_risk(AgentStats& stats) {
+  ++stats.risk_cycles;
+  realtime_risk_.sample(frame_);
+  saturation_risk_.sample(frame_);
+  system_state_.sample(frame_);
+}
 
 void Agent::publish_sinks(AgentStats& stats) {
   ++stats.sink_cycles;
