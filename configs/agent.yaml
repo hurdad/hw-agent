@@ -19,3 +19,4 @@ sensors:
   thermal: true
   power: true
   cpufreq: true
+  gpu: true
