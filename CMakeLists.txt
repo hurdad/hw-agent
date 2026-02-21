@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(USE_NVML "Enable NVML GPU monitoring support" ON)
+
 add_library(hiredis INTERFACE)
 add_library(hiredis::hiredis ALIAS hiredis)
 
@@ -24,6 +26,17 @@ if(NOT TARGET yaml-cpp)
   add_library(yaml-cpp INTERFACE)
 endif()
 
+if(USE_NVML)
+  find_path(NVML_INCLUDE_DIR nvml.h)
+  find_library(NVML_LIBRARY nvidia-ml)
+  if(NVML_INCLUDE_DIR AND NVML_LIBRARY)
+    set(HW_AGENT_HAVE_NVML TRUE)
+    message(STATUS "NVML found: compile-time headers and library enabled")
+  else()
+    message(STATUS "NVML not found, building without compile-time NVML (runtime dlopen fallback remains)")
+  endif()
+endif()
+
 add_executable(hw_agent
   src/main.cpp
   src/core/agent.cpp
@@ -40,7 +53,8 @@ add_executable(hw_agent
   src/sensors/memory.cpp
   src/sensors/disk.cpp
   src/sensors/network.cpp
-  src/sensors/gpu.cpp
+  src/sensors/gpu/gpu_nvml.cpp
+  src/sensors/gpu/gpu_none.cpp
   src/derived/scheduler_pressure.cpp
   src/derived/memory_pressure.cpp
   src/derived/io_pressure.cpp
@@ -55,7 +69,13 @@ add_executable(hw_agent
 )
 
 target_include_directories(hw_agent PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(hw_agent PRIVATE yaml-cpp hiredis::hiredis)
+target_link_libraries(hw_agent PRIVATE yaml-cpp hiredis::hiredis ${CMAKE_DL_LIBS})
+
+if(HW_AGENT_HAVE_NVML)
+  target_compile_definitions(hw_agent PRIVATE HW_AGENT_HAVE_NVML)
+  target_include_directories(hw_agent PRIVATE ${NVML_INCLUDE_DIR})
+  target_link_libraries(hw_agent PRIVATE ${NVML_LIBRARY})
+endif()
 
 
 enable_testing()

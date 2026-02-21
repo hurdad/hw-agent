@@ -21,6 +21,7 @@
 #include "risk/system_state.hpp"
 #include "sensors/cpu.hpp"
 #include "sensors/cpufreq.hpp"
+#include "sensors/gpu/gpu.hpp"
 #include "sensors/disk.hpp"
 #include "sensors/interrupts.hpp"
 #include "sensors/memory.hpp"
@@ -82,6 +83,7 @@ class Agent {
   sensors::ThermalSensor thermal_sensor_{};
   sensors::PowerSensor power_sensor_{};
   sensors::CpuFreqSensor cpufreq_sensor_{};
+  std::unique_ptr<sensors::gpu::GpuSensor> gpu_sensor_{};
 
   derived::SchedulerPressure scheduler_pressure_{};
   derived::MemoryPressure memory_pressure_{};
