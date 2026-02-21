@@ -5,6 +5,55 @@ from redis import Redis
 from redis.exceptions import ResponseError
 
 
+HW_AGENT_METRIC_SUFFIXES = {
+    "raw:psi",
+    "raw:psi_memory",
+    "raw:psi_io",
+    "raw:cpu",
+    "raw:irq",
+    "raw:softirqs",
+    "raw:memory",
+    "raw:thermal",
+    "raw:cpufreq",
+    "raw:cpu_throttle_ratio",
+    "raw:disk",
+    "raw:network",
+    "raw:gpu_util",
+    "raw:gpu_mem_util",
+    "raw:emc_util",
+    "raw:gpu_mem_free",
+    "raw:gpu_temp",
+    "raw:gpu_clock_ratio",
+    "raw:gpu_power_ratio",
+    "raw:gpu_throttle",
+    "derived:scheduler_pressure",
+    "derived:memory_pressure",
+    "derived:io_pressure",
+    "derived:thermal_pressure",
+    "derived:power_pressure",
+    "derived:latency_jitter",
+    "risk:realtime_risk",
+    "risk:saturation_risk",
+    "risk:state",
+    "agent:heartbeat",
+    "agent:loop_jitter",
+    "agent:compute_time",
+    "agent:redis_latency",
+    "agent:redis_errors",
+    "agent:sensor_failures",
+    "agent:missed_cycles",
+}
+
+
+def _is_hw_agent_metric_key(key: str, prefix: str) -> bool:
+    prefix_with_sep = f"{prefix}:"
+    if not key.startswith(prefix_with_sep):
+        return False
+
+    suffix = key[len(prefix_with_sep) :]
+    return suffix in HW_AGENT_METRIC_SUFFIXES
+
+
 def collect_info(client: Redis) -> dict[str, Any]:
     return client.info()
 
@@ -14,6 +63,9 @@ def collect_hw_metrics(client: Redis, prefix: str = "edge:node") -> dict[str, fl
     keys = sorted(client.scan_iter(match=f"{prefix}:*"))
 
     for key in keys:
+        if not _is_hw_agent_metric_key(key, prefix):
+            continue
+
         try:
             entry = client.execute_command("TS.GET", key)
         except ResponseError:
