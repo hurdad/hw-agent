@@ -29,11 +29,12 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      AGENT_CONFIG: agent.yaml
     command:
       - /bin/sh
       - -c
       - |
-        cp /app/configs/agent.yaml /tmp/agent.yaml
+        cp "/app/configs/$${AGENT_CONFIG}" /tmp/agent.yaml
         sed -i "s|^  address: .*|  address: $${REDIS_HOST}:$${REDIS_PORT}|" /tmp/agent.yaml
         while true; do /usr/local/bin/hw_agent /tmp/agent.yaml; sleep 1; done
     depends_on:
