@@ -180,6 +180,48 @@ int test_sampler_should_sample_every() {
   return 0;
 }
 
+int test_sensor_dispatches_once_per_tick() {
+  struct SensorDispatchProbe {
+    std::uint64_t every_ticks;
+    std::size_t dispatch_count{0};
+  };
+
+  std::vector<SensorDispatchProbe> sensors{{1}, {2}, {3}, {5}};
+  constexpr std::size_t total_ticks = 30;
+
+  Sampler sampler;
+  for (std::size_t tick = 0; tick < total_ticks; ++tick) {
+    for (auto& sensor : sensors) {
+      std::size_t calls_this_tick = 0;
+      if (sampler.should_sample_every(sensor.every_ticks)) {
+        ++sensor.dispatch_count;
+        ++calls_this_tick;
+      }
+
+      if (calls_this_tick > 1) {
+        return fail("test_sensor_dispatches_once_per_tick", "sensor dispatched more than once in the same tick");
+      }
+    }
+
+    sampler.advance();
+  }
+
+  for (const auto& sensor : sensors) {
+    std::size_t expected_dispatches = 0;
+    for (std::size_t tick = 0; tick < total_ticks; ++tick) {
+      if ((tick % sensor.every_ticks) == 0) {
+        ++expected_dispatches;
+      }
+    }
+
+    if (sensor.dispatch_count != expected_dispatches) {
+      return fail("test_sensor_dispatches_once_per_tick", "sensor dispatch count did not match expected schedule");
+    }
+  }
+
+  return 0;
+}
+
 int test_config_parsing_edge_cases() {
   const auto bad_port = std::filesystem::temp_directory_path() / "hw_agent_bad_port.yaml";
   {
@@ -442,6 +484,7 @@ int main() {
   if (int rc = test_memory_sensor_parser(); rc != 0) return rc;
   if (int rc = test_memory_pressure_computation_and_ema(); rc != 0) return rc;
   if (int rc = test_sampler_should_sample_every(); rc != 0) return rc;
+  if (int rc = test_sensor_dispatches_once_per_tick(); rc != 0) return rc;
   if (int rc = test_config_parsing_edge_cases(); rc != 0) return rc;
   if (int rc = test_interrupts_and_softirqs_delta_and_underflow_protection(); rc != 0) return rc;
   if (int rc = test_thermal_sensor_headroom_and_all_zones_fail_fallback(); rc != 0) return rc;
