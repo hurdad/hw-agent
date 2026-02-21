@@ -1,5 +1,6 @@
 tick_rate_hz: 10
 thermal_throttle_temp_c: 84.0
+thermal_pressure_warning_window_c: 30.0
 
 agent:
   publish_health: true

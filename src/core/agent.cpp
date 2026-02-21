@@ -12,7 +12,8 @@ Agent::Agent(AgentConfig config)
     : tick_interval_(config.tick_interval),
       publish_health_(config.publish_health),
       publish_stdout_(config.stdout_debug),
-      thermal_sensor_(config.thermal_throttle_temp_c) {
+      thermal_sensor_(config.thermal_throttle_temp_c),
+      thermal_pressure_(config.thermal_pressure_warning_window_c) {
   if (config.redis.enabled) {
     sinks::RedisTsOptions options{};
     options.host = config.redis.host;

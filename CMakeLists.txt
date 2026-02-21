@@ -97,6 +97,7 @@ add_executable(hw_agent_agent_unit_tests
   src/core/config.cpp
   src/core/sampler.cpp
   src/derived/memory_pressure.cpp
+  src/derived/thermal_pressure.cpp
   src/sensors/memory.cpp
   src/sensors/interrupts.cpp
   src/sensors/softirqs.cpp
