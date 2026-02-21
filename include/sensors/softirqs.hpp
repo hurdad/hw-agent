@@ -10,6 +10,7 @@ namespace hw_agent::sensors {
 class SoftirqsSensor {
  public:
   SoftirqsSensor();
+  explicit SoftirqsSensor(std::FILE* file, bool owns_file = false);
   ~SoftirqsSensor();
 
   SoftirqsSensor(const SoftirqsSensor&) = delete;
@@ -21,6 +22,7 @@ class SoftirqsSensor {
   static constexpr std::size_t kReadBufferSize = 8192;
 
   std::FILE* file_{nullptr};
+  bool owns_file_{true};
   std::uint64_t prev_total_{0};
   float baseline_delta_{0.0F};
   bool has_prev_{false};

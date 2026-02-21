@@ -91,3 +91,19 @@ add_executable(hw_agent_risk_unit_tests
 target_include_directories(hw_agent_risk_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_test(NAME hw_agent_risk_unit_tests COMMAND hw_agent_risk_unit_tests)
+
+add_executable(hw_agent_agent_unit_tests
+  tests/agent_unit_tests.cpp
+  src/core/config.cpp
+  src/core/sampler.cpp
+  src/derived/memory_pressure.cpp
+  src/sensors/memory.cpp
+  src/sensors/interrupts.cpp
+  src/sensors/softirqs.cpp
+  src/sinks/redis_ts.cpp
+)
+
+target_include_directories(hw_agent_agent_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(hw_agent_agent_unit_tests PRIVATE hiredis::hiredis)
+
+add_test(NAME hw_agent_agent_unit_tests COMMAND hw_agent_agent_unit_tests)

@@ -22,6 +22,7 @@ class MemorySensor {
   };
 
   MemorySensor();
+  MemorySensor(std::FILE* meminfo, std::FILE* vmstat, bool owns_files = false);
   ~MemorySensor();
 
   MemorySensor(const MemorySensor&) = delete;
@@ -38,6 +39,7 @@ class MemorySensor {
 
   std::FILE* meminfo_{nullptr};
   std::FILE* vmstat_{nullptr};
+  bool owns_files_{true};
   RawFields raw_{};
   std::uint64_t prev_pgsteal_total_{0};
   bool has_prev_{false};

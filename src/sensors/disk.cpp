@@ -119,8 +119,9 @@ void DiskSensor::sample(model::signal_frame& frame) noexcept {
     has_prev_ = true;
     raw_.disk_wait_estimation_ms = 0.0F;
   } else {
-    const std::uint64_t delta_completed = completed - prev_completed_;
-    const std::uint64_t delta_weighted_ms = raw_.weighted_io_ms - prev_weighted_io_ms_;
+    const std::uint64_t delta_completed = completed >= prev_completed_ ? (completed - prev_completed_) : 0;
+    const std::uint64_t delta_weighted_ms =
+        raw_.weighted_io_ms >= prev_weighted_io_ms_ ? (raw_.weighted_io_ms - prev_weighted_io_ms_) : 0;
     prev_completed_ = completed;
     prev_weighted_io_ms_ = raw_.weighted_io_ms;
 

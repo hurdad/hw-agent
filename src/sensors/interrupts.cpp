@@ -7,8 +7,10 @@ namespace hw_agent::sensors {
 
 InterruptsSensor::InterruptsSensor() : file_(std::fopen("/proc/stat", "r")) {}
 
+InterruptsSensor::InterruptsSensor(std::FILE* file, const bool owns_file) : file_(file), owns_file_(owns_file) {}
+
 InterruptsSensor::~InterruptsSensor() {
-  if (file_ != nullptr) {
+  if (owns_file_ && file_ != nullptr) {
     std::fclose(file_);
     file_ = nullptr;
   }
@@ -61,7 +63,7 @@ void InterruptsSensor::sample(model::signal_frame& frame) noexcept {
     return;
   }
 
-  const std::uint64_t count_delta = total_interrupts - prev_total_;
+  const std::uint64_t count_delta = total_interrupts >= prev_total_ ? (total_interrupts - prev_total_) : 0;
   const std::uint64_t time_delta_ns = frame.timestamp - prev_timestamp_ns_;
 
   prev_total_ = total_interrupts;

@@ -7,8 +7,10 @@ namespace hw_agent::sensors {
 
 SoftirqsSensor::SoftirqsSensor() : file_(std::fopen("/proc/softirqs", "r")) {}
 
+SoftirqsSensor::SoftirqsSensor(std::FILE* file, const bool owns_file) : file_(file), owns_file_(owns_file) {}
+
 SoftirqsSensor::~SoftirqsSensor() {
-  if (file_ != nullptr) {
+  if (owns_file_ && file_ != nullptr) {
     std::fclose(file_);
     file_ = nullptr;
   }
@@ -74,7 +76,7 @@ void SoftirqsSensor::sample(model::signal_frame& frame) noexcept {
     return;
   }
 
-  const std::uint64_t delta = total_softirqs - prev_total_;
+  const std::uint64_t delta = total_softirqs >= prev_total_ ? (total_softirqs - prev_total_) : 0;
   prev_total_ = total_softirqs;
 
   const float delta_f = static_cast<float>(delta);
