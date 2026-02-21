@@ -64,7 +64,7 @@ bool CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
 
     char* end = nullptr;
     errno = 0;
-    const unsigned long khz = std::strtoul(value_buffer, &end, 10);
+    const unsigned long long khz = std::strtoull(value_buffer, &end, 10);
     if (errno == 0 && end != value_buffer) {
       total_mhz += static_cast<double>(khz) / 1000.0;
       ++count;
