@@ -11,8 +11,8 @@ namespace hw_agent::sensors {
 class PowerSensor {
  public:
   struct RawFields {
-    std::uint64_t throttled_policies{0};
-    std::uint64_t total_policies{0};
+    std::uint64_t throttled_cores{0};
+    std::uint64_t total_cores{0};
     float throttle_ratio{0.0F};
   };
 
@@ -28,14 +28,19 @@ class PowerSensor {
   const RawFields& raw() const noexcept;
 
  private:
-  struct PolicySource {
-    std::FILE* cur_freq_file{nullptr};
-    std::FILE* max_freq_file{nullptr};
+  struct ThermalThrottleSource {
+    std::FILE* core_throttle_count_file{nullptr};
+    std::FILE* package_throttle_count_file{nullptr};
+
+    std::uint64_t prev_core_throttle_count{0};
+    std::uint64_t prev_package_throttle_count{0};
+
+    bool has_prev_counts{false};
   };
 
   static std::uint64_t read_u64_file(std::FILE* file) noexcept;
 
-  std::vector<PolicySource> policies_{};
+  std::vector<ThermalThrottleSource> cores_{};
   RawFields raw_{};
 };
 

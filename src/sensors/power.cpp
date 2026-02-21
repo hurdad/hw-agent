@@ -1,65 +1,89 @@
 #include "sensors/power.hpp"
 
+#include <cctype>
 #include <filesystem>
 
 namespace hw_agent::sensors {
 
 namespace {
-constexpr const char* kCpuFreqPath = "/sys/devices/system/cpu/cpufreq";
+constexpr const char* kCpuPath = "/sys/devices/system/cpu";
 }
 
 PowerSensor::PowerSensor() {
-  for (const auto& entry : std::filesystem::directory_iterator(kCpuFreqPath)) {
+  for (const auto& entry : std::filesystem::directory_iterator(kCpuPath)) {
     if (!entry.is_directory()) {
       continue;
     }
 
     const std::string name = entry.path().filename().string();
-    if (name.rfind("policy", 0) != 0) {
+    if (name.rfind("cpu", 0) != 0 || name.size() <= 3) {
       continue;
     }
 
-    const std::string base_path = entry.path().string();
+    bool is_cpu_dir = true;
+    for (std::size_t index = 3; index < name.size(); ++index) {
+      if (!std::isdigit(static_cast<unsigned char>(name[index]))) {
+        is_cpu_dir = false;
+        break;
+      }
+    }
+    if (!is_cpu_dir) {
+      continue;
+    }
 
-    PolicySource source{};
-    source.cur_freq_file = std::fopen((base_path + "/scaling_cur_freq").c_str(), "r");
-    source.max_freq_file = std::fopen((base_path + "/scaling_max_freq").c_str(), "r");
-    policies_.push_back(source);
+    const std::string base_path = entry.path().string() + "/thermal_throttle";
+
+    ThermalThrottleSource source{};
+    source.core_throttle_count_file = std::fopen((base_path + "/core_throttle_count").c_str(), "r");
+    source.package_throttle_count_file = std::fopen((base_path + "/package_throttle_count").c_str(), "r");
+
+    if (source.core_throttle_count_file == nullptr && source.package_throttle_count_file == nullptr) {
+      continue;
+    }
+
+    cores_.push_back(source);
   }
 }
 
 PowerSensor::~PowerSensor() {
-  for (PolicySource& policy : policies_) {
-    if (policy.cur_freq_file != nullptr) {
-      std::fclose(policy.cur_freq_file);
-      policy.cur_freq_file = nullptr;
+  for (ThermalThrottleSource& core : cores_) {
+    if (core.core_throttle_count_file != nullptr) {
+      std::fclose(core.core_throttle_count_file);
+      core.core_throttle_count_file = nullptr;
     }
-    if (policy.max_freq_file != nullptr) {
-      std::fclose(policy.max_freq_file);
-      policy.max_freq_file = nullptr;
+    if (core.package_throttle_count_file != nullptr) {
+      std::fclose(core.package_throttle_count_file);
+      core.package_throttle_count_file = nullptr;
     }
   }
 }
 
 void PowerSensor::sample(model::signal_frame& frame) noexcept {
   raw_ = {};
-  raw_.total_policies = policies_.size();
+  raw_.total_cores = cores_.size();
 
-  for (const PolicySource& policy : policies_) {
-    const std::uint64_t cur_freq = read_u64_file(policy.cur_freq_file);
-    const std::uint64_t max_freq = read_u64_file(policy.max_freq_file);
+  for (ThermalThrottleSource& core : cores_) {
+    const std::uint64_t core_throttle_count = read_u64_file(core.core_throttle_count_file);
+    const std::uint64_t package_throttle_count = read_u64_file(core.package_throttle_count_file);
 
-    if (max_freq == 0) {
+    if (!core.has_prev_counts) {
+      core.prev_core_throttle_count = core_throttle_count;
+      core.prev_package_throttle_count = package_throttle_count;
+      core.has_prev_counts = true;
       continue;
     }
 
-    if (cur_freq < max_freq) {
-      ++raw_.throttled_policies;
+    if (core_throttle_count > core.prev_core_throttle_count ||
+        package_throttle_count > core.prev_package_throttle_count) {
+      ++raw_.throttled_cores;
     }
+
+    core.prev_core_throttle_count = core_throttle_count;
+    core.prev_package_throttle_count = package_throttle_count;
   }
 
-  if (raw_.total_policies != 0) {
-    raw_.throttle_ratio = static_cast<float>(raw_.throttled_policies) / static_cast<float>(raw_.total_policies);
+  if (raw_.total_cores != 0) {
+    raw_.throttle_ratio = static_cast<float>(raw_.throttled_cores) / static_cast<float>(raw_.total_cores);
   }
 
   frame.power = raw_.throttle_ratio;
