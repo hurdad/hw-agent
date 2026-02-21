@@ -82,6 +82,21 @@ void Agent::register_sensors(const AgentConfig& config) {
   sensor_registry_.push_back({"thermal", 9, sensor_enabled(config, "thermal"), [this](model::signal_frame& frame) { return thermal_sensor_.sample(frame); }});
   sensor_registry_.push_back({"power", 10, sensor_enabled(config, "power"), [this](model::signal_frame& frame) { return power_sensor_.sample(frame); }});
   sensor_registry_.push_back({"cpufreq", 11, sensor_enabled(config, "cpufreq"), [this](model::signal_frame& frame) { return cpufreq_sensor_.sample(frame); }});
+  sensor_registry_.push_back({"psi", 1, sensor_enabled(config, "psi"), [this](model::signal_frame& frame) { psi_sensor_.sample(frame); return true; }});
+  sensor_registry_.push_back({"cpu", 2, sensor_enabled(config, "cpu"), [this](model::signal_frame& frame) { cpu_sensor_.sample(frame); return true; }});
+  sensor_registry_.push_back({"interrupts", 3, sensor_enabled(config, "interrupts"), [this](model::signal_frame& frame) { interrupts_sensor_.sample(frame); return true; }});
+  sensor_registry_.push_back({"softirqs", 4, sensor_enabled(config, "softirqs"), [this](model::signal_frame& frame) { softirqs_sensor_.sample(frame); return true; }});
+  sensor_registry_.push_back({"memory", 5, sensor_enabled(config, "memory"), [this](model::signal_frame& frame) { memory_sensor_.sample(frame); return true; }});
+  sensor_registry_.push_back({"disk", 6, sensor_enabled(config, "disk"), [this](model::signal_frame& frame) { disk_sensor_.sample(frame); return true; }});
+  sensor_registry_.push_back({"network", 7, sensor_enabled(config, "network"), [this](model::signal_frame& frame) { network_sensor_.sample(frame); return true; }});
+  sensor_registry_.push_back({"tegrastats", 8, sensor_enabled(config, "tegrastats"), [this](model::signal_frame& frame) {
+    const bool was_enabled = tegrastats_sensor_.enabled();
+    tegrastats_sensor_.sample(frame);
+    return !was_enabled || tegrastats_sensor_.enabled();
+  }});
+  sensor_registry_.push_back({"thermal", 9, sensor_enabled(config, "thermal"), [this](model::signal_frame& frame) { thermal_sensor_.sample(frame); return true; }});
+  sensor_registry_.push_back({"power", 10, sensor_enabled(config, "power"), [this](model::signal_frame& frame) { power_sensor_.sample(frame); return true; }});
+  sensor_registry_.push_back({"cpufreq", 11, sensor_enabled(config, "cpufreq"), [this](model::signal_frame& frame) { cpufreq_sensor_.sample(frame); return true; }});
   sensor_registry_.push_back({"gpu", 12, sensor_enabled(config, "gpu"), [this](model::signal_frame& frame) {
     return gpu_sensor_ != nullptr ? gpu_sensor_->collect(frame) : false;
   }});

@@ -2,49 +2,68 @@
 
 #include <cerrno>
 #include <cstdlib>
-#include <cstring>
+#include <glob.h>
 
 namespace hw_agent::sensors {
 
-CpuFreqSensor::CpuFreqSensor() : file_(std::fopen("/proc/cpuinfo", "r")) {}
+CpuFreqSensor::CpuFreqSensor() {
+  glob_t matches{};
+  constexpr const char* pattern = "/sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq";
 
-CpuFreqSensor::~CpuFreqSensor() {
-  if (file_ != nullptr) {
-    std::fclose(file_);
-    file_ = nullptr;
+  if (::glob(pattern, 0, nullptr, &matches) == 0) {
+    files_.reserve(matches.gl_pathc);
+    for (std::size_t i = 0; i < matches.gl_pathc; ++i) {
+      if (std::FILE* file = std::fopen(matches.gl_pathv[i], "r"); file != nullptr) {
+        files_.push_back(file);
+      }
+    }
   }
+
+  ::globfree(&matches);
 }
 
 bool CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
   if (file_ == nullptr) {
     frame.cpufreq = 0.0F;
     return false;
+CpuFreqSensor::~CpuFreqSensor() {
+  for (std::FILE* file : files_) {
+    if (file != nullptr) {
+      std::fclose(file);
+    }
   }
+  files_.clear();
+}
 
-  if (std::fseek(file_, 0L, SEEK_SET) != 0) {
+void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
+  if (files_.empty()) {
     frame.cpufreq = 0.0F;
     return false;
   }
 
-  constexpr char needle[] = "cpu MHz";
-  constexpr std::size_t needle_size = sizeof(needle) - 1;
-
-  char line_buffer[kReadBufferSize]{};
+  char value_buffer[64]{};
   double total_mhz = 0.0;
   std::size_t count = 0;
 
-  while (std::fgets(line_buffer, static_cast<int>(sizeof(line_buffer)), file_) != nullptr) {
-    if (std::memcmp(line_buffer, needle, needle_size) == 0) {
-      const char* colon = std::strchr(line_buffer, ':');
-      if (colon != nullptr) {
-        char* end = nullptr;
-        errno = 0;
-        const double mhz = std::strtod(colon + 1, &end);
-        if (errno == 0 && end != colon + 1) {
-          total_mhz += mhz;
-          ++count;
-        }
-      }
+  for (std::FILE* file : files_) {
+    if (file == nullptr) {
+      continue;
+    }
+
+    if (std::fseek(file, 0L, SEEK_SET) != 0) {
+      continue;
+    }
+
+    if (std::fgets(value_buffer, static_cast<int>(sizeof(value_buffer)), file) == nullptr) {
+      continue;
+    }
+
+    char* end = nullptr;
+    errno = 0;
+    const unsigned long khz = std::strtoul(value_buffer, &end, 10);
+    if (errno == 0 && end != value_buffer) {
+      total_mhz += static_cast<double>(khz) / 1000.0;
+      ++count;
     }
   }
 
