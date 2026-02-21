@@ -19,6 +19,12 @@ Agent::Agent(AgentConfig config)
     options.port = config.redis.port;
     options.publish_health = config.publish_health;
     redis_sink_ = std::make_unique<sinks::RedisTsSink>(options);
+
+    if (redis_sink_->check_connectivity()) {
+      std::cerr << "[agent] redis connectivity confirmed at " << options.host << ':' << options.port << '\n';
+    } else {
+      std::cerr << "[agent] redis connectivity check failed at " << options.host << ':' << options.port << '\n';
+    }
   }
 
   gpu_sensor_ = sensors::gpu::make_nvml_sensor();

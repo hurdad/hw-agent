@@ -36,6 +36,10 @@ RedisTsSink::~RedisTsSink() = default;
 RedisTsSink::RedisTsSink(RedisTsSink&&) noexcept = default;
 RedisTsSink& RedisTsSink::operator=(RedisTsSink&&) noexcept = default;
 
+bool RedisTsSink::check_connectivity() {
+  return ensure_connected();
+}
+
 void RedisTsSink::ContextDeleter::operator()(redisContext* context) const {
   if (context != nullptr) {
     redisFree(context);
