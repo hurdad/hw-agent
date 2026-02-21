@@ -11,9 +11,17 @@ PsiSensor::PsiSensor()
           {"/proc/pressure/cpu", std::fopen("/proc/pressure/cpu", "r")},
           {"/proc/pressure/memory", std::fopen("/proc/pressure/memory", "r")},
           {"/proc/pressure/io", std::fopen("/proc/pressure/io", "r")},
-      }} {}
+      }},
+      owns_files_(true) {}
+
+PsiSensor::PsiSensor(std::array<Source, 3> sources, const bool owns_files)
+    : sources_(sources), owns_files_(owns_files) {}
 
 PsiSensor::~PsiSensor() {
+  if (!owns_files_) {
+    return;
+  }
+
   for (auto& source : sources_) {
     if (source.file != nullptr) {
       std::fclose(source.file);

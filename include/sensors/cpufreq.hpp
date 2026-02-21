@@ -10,6 +10,7 @@ namespace hw_agent::sensors {
 class CpuFreqSensor {
  public:
   CpuFreqSensor();
+  explicit CpuFreqSensor(std::vector<std::FILE*> files, bool owns_files = false);
   ~CpuFreqSensor();
 
   CpuFreqSensor(const CpuFreqSensor&) = delete;
@@ -19,6 +20,7 @@ class CpuFreqSensor {
 
  private:
   std::vector<std::FILE*> files_{};
+  bool owns_files_{true};
   float ema_mhz_{0.0F};
   bool has_ema_{false};
 };

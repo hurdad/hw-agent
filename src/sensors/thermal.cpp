@@ -5,6 +5,7 @@
 #include <fstream>
 #include <limits>
 #include <memory>
+#include <utility>
 
 namespace hw_agent::sensors {
 
@@ -12,14 +13,19 @@ namespace {
 constexpr const char* kSysClassThermal = "/sys/class/thermal";
 }
 
-ThermalSensor::ThermalSensor(const float throttle_temp_c) {
+ThermalSensor::ThermalSensor(const float throttle_temp_c) : owns_files_(true) {
   raw_.throttle_temp_c = throttle_temp_c;
   discover_zones(kSysClassThermal);
 }
 
-ThermalSensor::ThermalSensor(const float throttle_temp_c, std::string thermal_root) {
+ThermalSensor::ThermalSensor(const float throttle_temp_c, std::string thermal_root) : owns_files_(true) {
   raw_.throttle_temp_c = throttle_temp_c;
   discover_zones(thermal_root);
+}
+
+ThermalSensor::ThermalSensor(const float throttle_temp_c, std::vector<ZoneSource> zones, const bool owns_files)
+    : zones_(std::move(zones)), owns_files_(owns_files) {
+  raw_.throttle_temp_c = throttle_temp_c;
 }
 
 void ThermalSensor::discover_zones(const std::string& thermal_root) {
@@ -69,6 +75,10 @@ void ThermalSensor::discover_zones(const std::string& thermal_root) {
 }
 
 ThermalSensor::~ThermalSensor() {
+  if (!owns_files_) {
+    return;
+  }
+
   for (ZoneSource& zone : zones_) {
     if (zone.file != nullptr) {
       std::fclose(zone.file);

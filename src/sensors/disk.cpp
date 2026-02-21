@@ -30,10 +30,12 @@ bool is_partition_device(const char* name) noexcept {
 
 }  // namespace
 
-DiskSensor::DiskSensor() : diskstats_(std::fopen("/proc/diskstats", "r")) {}
+DiskSensor::DiskSensor() : diskstats_(std::fopen("/proc/diskstats", "r")), owns_file_(true) {}
+
+DiskSensor::DiskSensor(std::FILE* diskstats, const bool owns_file) : diskstats_(diskstats), owns_file_(owns_file) {}
 
 DiskSensor::~DiskSensor() {
-  if (diskstats_ != nullptr) {
+  if (owns_file_ && diskstats_ != nullptr) {
     std::fclose(diskstats_);
     diskstats_ = nullptr;
   }

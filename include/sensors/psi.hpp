@@ -9,7 +9,13 @@ namespace hw_agent::sensors {
 
 class PsiSensor {
  public:
+  struct Source {
+    const char* path;
+    std::FILE* file;
+  };
+
   PsiSensor();
+  explicit PsiSensor(std::array<Source, 3> sources, bool owns_files = false);
   ~PsiSensor();
 
   PsiSensor(const PsiSensor&) = delete;
@@ -20,15 +26,11 @@ class PsiSensor {
  private:
   static constexpr std::size_t kReadBufferSize = 256;
 
-  struct Source {
-    const char* path;
-    std::FILE* file;
-  };
-
   bool read_avg10(Source& source, float& value) noexcept;
   static float parse_avg10(const char* data, std::size_t size) noexcept;
 
   std::array<Source, 3> sources_;
+  bool owns_files_{true};
 };
 
 }  // namespace hw_agent::sensors

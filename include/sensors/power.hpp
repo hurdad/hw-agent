@@ -16,7 +16,18 @@ class PowerSensor {
     float throttle_ratio{0.0F};
   };
 
+  struct ThermalThrottleSource {
+    std::FILE* core_throttle_count_file{nullptr};
+    std::FILE* package_throttle_count_file{nullptr};
+
+    std::uint64_t prev_core_throttle_count{0};
+    std::uint64_t prev_package_throttle_count{0};
+
+    bool has_prev_counts{false};
+  };
+
   PowerSensor();
+  explicit PowerSensor(std::vector<ThermalThrottleSource> cores, bool owns_files = false);
   ~PowerSensor();
 
   PowerSensor(const PowerSensor&) = delete;
@@ -28,19 +39,10 @@ class PowerSensor {
   const RawFields& raw() const noexcept;
 
  private:
-  struct ThermalThrottleSource {
-    std::FILE* core_throttle_count_file{nullptr};
-    std::FILE* package_throttle_count_file{nullptr};
-
-    std::uint64_t prev_core_throttle_count{0};
-    std::uint64_t prev_package_throttle_count{0};
-
-    bool has_prev_counts{false};
-  };
-
   static bool read_u64_file(std::FILE* file, std::uint64_t& value) noexcept;
 
   std::vector<ThermalThrottleSource> cores_{};
+  bool owns_files_{true};
   RawFields raw_{};
 };
 
