@@ -42,26 +42,28 @@
       "options": {
         "legend": {
           "calcs": [],
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
       "targets": [
-        {
-          "query": "TS.RANGE edge:${node}:risk:realtime $__from $__to",
-          "refId": "A"
-        },
-        {
-          "query": "TS.RANGE edge:${node}:risk:saturation $__from $__to",
-          "refId": "B"
-        }
+        { "query": "TS.RANGE ${key_prefix}:raw:psi $__from $__to", "refId": "A" },
+        { "query": "TS.RANGE ${key_prefix}:raw:cpu $__from $__to", "refId": "B" },
+        { "query": "TS.RANGE ${key_prefix}:raw:irq $__from $__to", "refId": "C" },
+        { "query": "TS.RANGE ${key_prefix}:raw:softirqs $__from $__to", "refId": "D" },
+        { "query": "TS.RANGE ${key_prefix}:raw:memory $__from $__to", "refId": "E" },
+        { "query": "TS.RANGE ${key_prefix}:raw:thermal $__from $__to", "refId": "F" },
+        { "query": "TS.RANGE ${key_prefix}:raw:cpufreq $__from $__to", "refId": "G" },
+        { "query": "TS.RANGE ${key_prefix}:raw:power $__from $__to", "refId": "H" },
+        { "query": "TS.RANGE ${key_prefix}:raw:disk $__from $__to", "refId": "I" },
+        { "query": "TS.RANGE ${key_prefix}:raw:network $__from $__to", "refId": "J" }
       ],
-      "title": "Risk",
+      "title": "Raw Signals (CPU / Memory / IO)",
       "type": "timeseries"
     },
     {
@@ -84,34 +86,25 @@
       "options": {
         "legend": {
           "calcs": [],
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
       "targets": [
-        {
-          "query": "TS.RANGE edge:${node}:pressure:scheduler $__from $__to",
-          "refId": "A"
-        },
-        {
-          "query": "TS.RANGE edge:${node}:pressure:memory $__from $__to",
-          "refId": "B"
-        },
-        {
-          "query": "TS.RANGE edge:${node}:pressure:io $__from $__to",
-          "refId": "C"
-        },
-        {
-          "query": "TS.RANGE edge:${node}:pressure:thermal $__from $__to",
-          "refId": "D"
-        }
+        { "query": "TS.RANGE ${key_prefix}:raw:gpu_util $__from $__to", "refId": "A" },
+        { "query": "TS.RANGE ${key_prefix}:raw:gpu_mem_util $__from $__to", "refId": "B" },
+        { "query": "TS.RANGE ${key_prefix}:raw:gpu_mem_free $__from $__to", "refId": "C" },
+        { "query": "TS.RANGE ${key_prefix}:raw:gpu_temp $__from $__to", "refId": "D" },
+        { "query": "TS.RANGE ${key_prefix}:raw:gpu_clock_ratio $__from $__to", "refId": "E" },
+        { "query": "TS.RANGE ${key_prefix}:raw:gpu_power_ratio $__from $__to", "refId": "F" },
+        { "query": "TS.RANGE ${key_prefix}:raw:gpu_throttle $__from $__to", "refId": "G" }
       ],
-      "title": "Pressure",
+      "title": "Raw Signals (GPU)",
       "type": "timeseries"
     },
     {
@@ -134,30 +127,24 @@
       "options": {
         "legend": {
           "calcs": [],
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
       "targets": [
-        {
-          "query": "TS.RANGE edge:${node}:agent:loop_jitter $__from $__to",
-          "refId": "A"
-        },
-        {
-          "query": "TS.RANGE edge:${node}:agent:compute_time $__from $__to",
-          "refId": "B"
-        },
-        {
-          "query": "TS.RANGE edge:${node}:agent:redis_latency $__from $__to",
-          "refId": "C"
-        }
+        { "query": "TS.RANGE ${key_prefix}:derived:scheduler_pressure $__from $__to", "refId": "A" },
+        { "query": "TS.RANGE ${key_prefix}:derived:memory_pressure $__from $__to", "refId": "B" },
+        { "query": "TS.RANGE ${key_prefix}:derived:io_pressure $__from $__to", "refId": "C" },
+        { "query": "TS.RANGE ${key_prefix}:derived:thermal_pressure $__from $__to", "refId": "D" },
+        { "query": "TS.RANGE ${key_prefix}:derived:power_pressure $__from $__to", "refId": "E" },
+        { "query": "TS.RANGE ${key_prefix}:derived:latency_jitter $__from $__to", "refId": "F" }
       ],
-      "title": "Agent Timing",
+      "title": "Derived Pressure Metrics",
       "type": "timeseries"
     },
     {
@@ -165,130 +152,140 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "palette-classic"
           },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
+          "min": 0,
+          "max": 3
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
+        "w": 12,
         "x": 12,
         "y": 8
       },
       "id": 4,
       "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
-        "textMode": "auto"
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "targets": [
-        {
-          "query": "TS.RANGE edge:${node}:agent:missed_cycles $__from $__to",
-          "refId": "A"
-        }
+        { "query": "TS.RANGE ${key_prefix}:risk:realtime_risk $__from $__to", "refId": "A" },
+        { "query": "TS.RANGE ${key_prefix}:risk:saturation_risk $__from $__to", "refId": "B" },
+        { "query": "TS.RANGE ${key_prefix}:risk:state $__from $__to", "refId": "C" }
       ],
-      "title": "Missed Cycles",
-      "type": "stat"
+      "title": "Risk Signals",
+      "type": "timeseries"
     },
     {
       "datasource": "redis",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
+            "mode": "palette-classic"
           }
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 8
+        "w": 12,
+        "x": 0,
+        "y": 16
       },
       "id": 5,
       "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
-        "textMode": "auto"
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "targets": [
-        {
-          "query": "TS.RANGE edge:${node}:agent:sensor_failures $__from $__to",
-          "refId": "A"
-        }
+        { "query": "TS.RANGE ${key_prefix}:agent:heartbeat $__from $__to", "refId": "A" },
+        { "query": "TS.RANGE ${key_prefix}:agent:loop_jitter $__from $__to", "refId": "B" },
+        { "query": "TS.RANGE ${key_prefix}:agent:compute_time $__from $__to", "refId": "C" },
+        { "query": "TS.RANGE ${key_prefix}:agent:redis_latency $__from $__to", "refId": "D" }
       ],
-      "title": "Sensor Failures",
-      "type": "stat"
+      "title": "Agent Timing / Health",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "redis",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        { "query": "TS.RANGE ${key_prefix}:agent:sensor_failures $__from $__to", "refId": "A" },
+        { "query": "TS.RANGE ${key_prefix}:agent:missed_cycles $__from $__to", "refId": "B" }
+      ],
+      "title": "Agent Error Counters",
+      "type": "timeseries"
     }
   ],
   "refresh": "5s",
   "schemaVersion": 39,
   "style": "dark",
-  "tags": [
-    "edge",
-    "stability"
-  ],
+  "tags": ["edge", "stability"],
   "templating": {
     "list": [
       {
         "current": {
           "selected": true,
-          "text": "node1",
-          "value": "node1"
+          "text": "edge:node",
+          "value": "edge:node"
         },
         "hide": 0,
         "includeAll": false,
-        "label": "node",
+        "label": "key_prefix",
         "multi": false,
-        "name": "node",
+        "name": "key_prefix",
         "options": [
           {
             "selected": true,
-            "text": "node1",
-            "value": "node1"
+            "text": "edge:node",
+            "value": "edge:node"
           }
         ],
-        "query": "node1",
+        "query": "edge:node",
         "skipUrlSync": false,
         "type": "custom"
       }
@@ -300,8 +297,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Edge Node Stability",
+  "title": "HW Agent All Metrics",
   "uid": "edge-node-stability",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
