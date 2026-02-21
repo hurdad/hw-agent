@@ -13,6 +13,7 @@ python -m hw_agent_tui
 ```
 
 Set `REDIS_URL` in your environment (defaults to `redis://localhost:6379/0`).
+Set `HW_AGENT_METRIC_PREFIX` if your deployment does not use the default `edge:node` prefix.
 
 ## MVP Scope
 
