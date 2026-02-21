@@ -21,7 +21,7 @@ using hw_agent::model::signal_frame;
 using hw_agent::sensors::CpuFreqSensor;
 using hw_agent::sensors::CpuSensor;
 using hw_agent::sensors::DiskSensor;
-using hw_agent::sensors::PowerSensor;
+using hw_agent::sensors::CpuThrottleSensor;
 using hw_agent::sensors::PsiSensor;
 using hw_agent::sensors::ThermalSensor;
 
@@ -206,7 +206,7 @@ int test_thermal_sensor_with_lazy_opened_zone_does_not_keep_file_when_not_owned(
   return 0;
 }
 
-int test_power_sensor_with_injected_throttle_files() {
+int test_cpu_throttle_sensor_with_injected_throttle_files() {
   std::FILE* core0 = std::tmpfile();
   std::FILE* pkg0 = std::tmpfile();
   std::FILE* core1 = std::tmpfile();
@@ -214,23 +214,23 @@ int test_power_sensor_with_injected_throttle_files() {
 
   if (!write_temp_file(core0, "10\n") || !write_temp_file(pkg0, "20\n") || !write_temp_file(core1, "3\n") ||
       !write_temp_file(pkg1, "7\n")) {
-    return fail("test_power_sensor_with_injected_throttle_files", "failed writing first throttle count snapshot");
+    return fail("test_cpu_throttle_sensor_with_injected_throttle_files", "failed writing first throttle count snapshot");
   }
 
-  std::vector<PowerSensor::ThermalThrottleSource> cores{{core0, pkg0}, {core1, pkg1}};
-  PowerSensor sensor(std::move(cores), false);
+  std::vector<CpuThrottleSensor::ThermalThrottleSource> cores{{core0, pkg0}, {core1, pkg1}};
+  CpuThrottleSensor sensor(std::move(cores), false);
   signal_frame frame{};
-  if (!sensor.sample(frame) || !almost_equal(frame.power, 0.0F)) {
-    return fail("test_power_sensor_with_injected_throttle_files", "first sample should initialize baseline");
+  if (!sensor.sample(frame) || !almost_equal(frame.cpu_throttle_ratio, 0.0F)) {
+    return fail("test_cpu_throttle_sensor_with_injected_throttle_files", "first sample should initialize baseline");
   }
 
   if (!write_temp_file(core0, "11\n") || !write_temp_file(pkg0, "20\n") || !write_temp_file(core1, "3\n") ||
       !write_temp_file(pkg1, "7\n")) {
-    return fail("test_power_sensor_with_injected_throttle_files", "failed writing second throttle count snapshot");
+    return fail("test_cpu_throttle_sensor_with_injected_throttle_files", "failed writing second throttle count snapshot");
   }
 
-  if (!sensor.sample(frame) || !almost_equal(frame.power, 0.5F)) {
-    return fail("test_power_sensor_with_injected_throttle_files", "throttle ratio mismatch");
+  if (!sensor.sample(frame) || !almost_equal(frame.cpu_throttle_ratio, 0.5F)) {
+    return fail("test_cpu_throttle_sensor_with_injected_throttle_files", "throttle ratio mismatch");
   }
 
   std::fclose(core0);
@@ -312,7 +312,7 @@ int main() {
   if (int rc = test_thermal_sensor_with_lazy_opened_zone_does_not_keep_file_when_not_owned(); rc != 0) {
     return rc;
   }
-  if (int rc = test_power_sensor_with_injected_throttle_files(); rc != 0) {
+  if (int rc = test_cpu_throttle_sensor_with_injected_throttle_files(); rc != 0) {
     return rc;
   }
   if (int rc = test_cpufreq_sensor_with_injected_scaling_cur_freq_files(); rc != 0) {

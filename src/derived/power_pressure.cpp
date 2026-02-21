@@ -5,7 +5,7 @@ namespace hw_agent::derived {
 
 
 void PowerPressure::sample(model::signal_frame& frame) noexcept {
-  const float raw_throttle = core::clamp01(frame.power);
+  const float raw_throttle = core::clamp01(frame.cpu_throttle_ratio);
   const float cpu_norm = core::clamp01(frame.cpu / 100.0F);
   const float thermal_norm = core::clamp01(frame.thermal_pressure);
 

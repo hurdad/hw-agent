@@ -18,6 +18,6 @@ sensors:
   network: true
   tegrastats: false
   thermal: true
-  power: true
+  cpu_throttle: true
   cpufreq: true
   gpu: false

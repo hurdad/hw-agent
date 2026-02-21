@@ -86,7 +86,7 @@ class Agent {
   sensors::NetworkSensor network_sensor_{};
   sensors::TegraStatsSensor tegrastats_sensor_{};
   sensors::ThermalSensor thermal_sensor_{};
-  sensors::PowerSensor power_sensor_{};
+  sensors::CpuThrottleSensor cpu_throttle_sensor_{};
   sensors::CpuFreqSensor cpufreq_sensor_{};
   std::unique_ptr<sensors::gpu::GpuSensor> gpu_sensor_{};
 

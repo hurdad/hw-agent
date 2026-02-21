@@ -50,7 +50,7 @@ using hw_agent::risk::SystemState;
 using hw_agent::sensors::CpuSensor;
 using hw_agent::sensors::InterruptsSensor;
 using hw_agent::sensors::MemorySensor;
-using hw_agent::sensors::PowerSensor;
+using hw_agent::sensors::CpuThrottleSensor;
 using hw_agent::sensors::PsiSensor;
 using hw_agent::sensors::SoftirqsSensor;
 using hw_agent::sensors::ThermalSensor;
@@ -596,9 +596,9 @@ int test_end_to_end_sensor_to_sink_pipeline() {
   MemorySensor memory_sensor(meminfo_file, vmstat_file, true);
   InterruptsSensor interrupts_sensor(interrupts_file, true);
   SoftirqsSensor softirqs_sensor(softirqs_file, true);
-  std::vector<PowerSensor::ThermalThrottleSource> cores{};
-  cores.push_back(PowerSensor::ThermalThrottleSource{core_throttle_file, package_throttle_file, 0, 0, false});
-  PowerSensor power_sensor(std::move(cores), true);
+  std::vector<CpuThrottleSensor::ThermalThrottleSource> cores{};
+  cores.push_back(CpuThrottleSensor::ThermalThrottleSource{core_throttle_file, package_throttle_file, 0, 0, false});
+  CpuThrottleSensor power_sensor(std::move(cores), true);
 
   SchedulerPressure scheduler_pressure;
   MemoryPressure memory_pressure;
