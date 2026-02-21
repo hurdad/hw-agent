@@ -53,7 +53,11 @@ Agent::Agent(AgentConfig config)
 AgentStats Agent::run_for_ticks(const std::size_t total_ticks) {
   AgentStats stats{};
 
-  auto next_wakeup = std::chrono::steady_clock::now();
+  if (first_tick_) {
+    next_wakeup_ = std::chrono::steady_clock::now();
+    first_tick_ = false;
+  }
+
   for (std::size_t i = 0; total_ticks == 0 || i < total_ticks; ++i) {
     const auto cycle_start = std::chrono::steady_clock::now();
 
@@ -73,8 +77,8 @@ AgentStats Agent::run_for_ticks(const std::size_t total_ticks) {
     ++stats.ticks_executed;
     sampler_.advance();
 
-    next_wakeup += tick_interval_;
-    std::this_thread::sleep_until(next_wakeup);
+    next_wakeup_ += tick_interval_;
+    std::this_thread::sleep_until(next_wakeup_);
   }
 
   return stats;

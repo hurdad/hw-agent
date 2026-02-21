@@ -68,6 +68,8 @@ class Agent {
   void update_agent_health(float actual_period_ms, float compute_time_ms);
 
   std::chrono::milliseconds tick_interval_{};
+  std::chrono::steady_clock::time_point next_wakeup_{};
+  bool first_tick_{true};
   std::optional<std::chrono::steady_clock::time_point> previous_cycle_start_{};
   Sampler sampler_{};
   model::signal_frame frame_{};
