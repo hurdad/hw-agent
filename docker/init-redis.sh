@@ -31,11 +31,20 @@ for key in \
   edge:node:raw:psi \
   edge:node:raw:cpu \
   edge:node:raw:irq \
+  edge:node:raw:softirqs \
   edge:node:raw:memory \
   edge:node:raw:thermal \
+  edge:node:raw:cpufreq \
   edge:node:raw:power \
   edge:node:raw:disk \
   edge:node:raw:network \
+  edge:node:raw:gpu_util \
+  edge:node:raw:gpu_mem_util \
+  edge:node:raw:gpu_mem_free \
+  edge:node:raw:gpu_temp \
+  edge:node:raw:gpu_clock_ratio \
+  edge:node:raw:gpu_power_ratio \
+  edge:node:raw:gpu_throttle \
   edge:node:risk:realtime_risk \
   edge:node:risk:saturation_risk \
   edge:node:risk:state \
