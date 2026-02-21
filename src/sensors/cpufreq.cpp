@@ -3,10 +3,11 @@
 #include <cerrno>
 #include <cstdlib>
 #include <glob.h>
+#include <utility>
 
 namespace hw_agent::sensors {
 
-CpuFreqSensor::CpuFreqSensor() {
+CpuFreqSensor::CpuFreqSensor() : owns_files_(true) {
   glob_t matches{};
   constexpr const char* pattern = "/sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq";
 
@@ -22,11 +23,14 @@ CpuFreqSensor::CpuFreqSensor() {
   ::globfree(&matches);
 }
 
-bool CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
-  if (file_ == nullptr) {
-    frame.cpufreq = 0.0F;
-    return false;
+CpuFreqSensor::CpuFreqSensor(std::vector<std::FILE*> files, const bool owns_files)
+    : files_(std::move(files)), owns_files_(owns_files) {}
+
 CpuFreqSensor::~CpuFreqSensor() {
+  if (!owns_files_) {
+    return;
+  }
+
   for (std::FILE* file : files_) {
     if (file != nullptr) {
       std::fclose(file);
@@ -35,7 +39,7 @@ CpuFreqSensor::~CpuFreqSensor() {
   files_.clear();
 }
 
-void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
+bool CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
   if (files_.empty()) {
     frame.cpufreq = 0.0F;
     return false;

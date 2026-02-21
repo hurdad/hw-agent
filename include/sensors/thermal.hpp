@@ -17,8 +17,15 @@ class ThermalSensor {
     float headroom_c{0.0F};
   };
 
+  struct ZoneSource {
+    std::string name{};
+    std::string temp_path{};
+    std::FILE* file{nullptr};
+  };
+
   explicit ThermalSensor(float throttle_temp_c = 85.0F);
   ThermalSensor(float throttle_temp_c, std::string thermal_root);
+  ThermalSensor(float throttle_temp_c, std::vector<ZoneSource> zones, bool owns_files = false);
   ~ThermalSensor();
 
   ThermalSensor(const ThermalSensor&) = delete;
@@ -32,16 +39,10 @@ class ThermalSensor {
 
  private:
   void discover_zones(const std::string& thermal_root);
-
-  struct ZoneSource {
-    std::string name{};
-    std::string temp_path{};
-    std::FILE* file{nullptr};
-  };
-
   static bool read_temp_c(std::FILE* file, float& temp_c) noexcept;
 
   std::vector<ZoneSource> zones_{};
+  bool owns_files_{true};
   RawFields raw_{};
 };
 

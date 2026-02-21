@@ -5,10 +5,12 @@
 
 namespace hw_agent::sensors {
 
-CpuSensor::CpuSensor() : file_(std::fopen("/proc/stat", "r")) {}
+CpuSensor::CpuSensor() : file_(std::fopen("/proc/stat", "r")), owns_file_(true) {}
+
+CpuSensor::CpuSensor(std::FILE* file, const bool owns_file) : file_(file), owns_file_(owns_file) {}
 
 CpuSensor::~CpuSensor() {
-  if (file_ != nullptr) {
+  if (owns_file_ && file_ != nullptr) {
     std::fclose(file_);
     file_ = nullptr;
   }

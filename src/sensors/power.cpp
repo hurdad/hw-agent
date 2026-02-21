@@ -3,6 +3,7 @@
 #include <cctype>
 #include <filesystem>
 #include <memory>
+#include <utility>
 
 namespace hw_agent::sensors {
 
@@ -10,7 +11,7 @@ namespace {
 constexpr const char* kCpuPath = "/sys/devices/system/cpu";
 }
 
-PowerSensor::PowerSensor() {
+PowerSensor::PowerSensor() : owns_files_(true) {
   try {
     for (const auto& entry : std::filesystem::directory_iterator(kCpuPath)) {
       if (!entry.is_directory()) {
@@ -64,7 +65,14 @@ PowerSensor::PowerSensor() {
   }
 }
 
+PowerSensor::PowerSensor(std::vector<ThermalThrottleSource> cores, const bool owns_files)
+    : cores_(std::move(cores)), owns_files_(owns_files) {}
+
 PowerSensor::~PowerSensor() {
+  if (!owns_files_) {
+    return;
+  }
+
   for (ThermalThrottleSource& core : cores_) {
     if (core.core_throttle_count_file != nullptr) {
       std::fclose(core.core_throttle_count_file);

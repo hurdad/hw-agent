@@ -108,3 +108,18 @@ target_include_directories(hw_agent_agent_unit_tests PRIVATE ${CMAKE_CURRENT_SOU
 target_link_libraries(hw_agent_agent_unit_tests PRIVATE hiredis::hiredis)
 
 add_test(NAME hw_agent_agent_unit_tests COMMAND hw_agent_agent_unit_tests)
+
+
+add_executable(hw_agent_sensors_unit_tests
+  tests/sensors_unit_tests.cpp
+  src/sensors/cpu.cpp
+  src/sensors/disk.cpp
+  src/sensors/thermal.cpp
+  src/sensors/power.cpp
+  src/sensors/cpufreq.cpp
+  src/sensors/psi.cpp
+)
+
+target_include_directories(hw_agent_sensors_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_test(NAME hw_agent_sensors_unit_tests COMMAND hw_agent_sensors_unit_tests)
