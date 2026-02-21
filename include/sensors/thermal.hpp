@@ -18,6 +18,7 @@ class ThermalSensor {
   };
 
   explicit ThermalSensor(float throttle_temp_c = 85.0F);
+  ThermalSensor(float throttle_temp_c, std::string thermal_root);
   ~ThermalSensor();
 
   ThermalSensor(const ThermalSensor&) = delete;
@@ -30,6 +31,8 @@ class ThermalSensor {
   const RawFields& raw() const noexcept;
 
  private:
+  void discover_zones(const std::string& thermal_root);
+
   struct ZoneSource {
     std::string name{};
     std::string temp_path{};
