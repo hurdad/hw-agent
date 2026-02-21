@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /src
 COPY . .
 RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
-    && cmake --build build --target hw_agent -j"$(nproc)"
+    && cmake --build build -j"$(nproc)" \
+    && ctest --test-dir build --output-on-failure
 
 FROM ubuntu:24.04 AS runtime
 
