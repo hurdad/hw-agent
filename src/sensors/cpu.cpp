@@ -72,8 +72,8 @@ bool CpuSensor::sample(model::signal_frame& frame) noexcept {
     return true;
   }
 
-  const std::uint64_t total_delta = total - prev_total_;
-  const std::uint64_t idle_delta = idle - prev_idle_;
+  const std::uint64_t total_delta = total >= prev_total_ ? (total - prev_total_) : 0;
+  const std::uint64_t idle_delta = idle >= prev_idle_ ? (idle - prev_idle_) : 0;
 
   prev_total_ = total;
   prev_idle_ = idle;
@@ -83,7 +83,8 @@ bool CpuSensor::sample(model::signal_frame& frame) noexcept {
     return true;
   }
 
-  const float busy_delta = static_cast<float>(total_delta - idle_delta);
+  const std::uint64_t busy_ticks = total_delta >= idle_delta ? (total_delta - idle_delta) : 0;
+  const float busy_delta = static_cast<float>(busy_ticks);
   frame.cpu = (busy_delta / static_cast<float>(total_delta)) * 100.0F;
   return true;
 }

@@ -77,6 +77,30 @@ int test_cpu_sensor_with_injected_proc_stat() {
   return 0;
 }
 
+int test_cpu_sensor_counter_boundary_guard() {
+  std::FILE* stat_file = std::tmpfile();
+  if (!write_temp_file(stat_file, "cpu  500 20 30 400 50 0 0 0 0 0\n")) {
+    return fail("test_cpu_sensor_counter_boundary_guard", "failed writing first proc/stat snapshot");
+  }
+
+  CpuSensor sensor(stat_file, false);
+  signal_frame frame{};
+  if (!sensor.sample(frame) || !almost_equal(frame.cpu, 0.0F)) {
+    return fail("test_cpu_sensor_counter_boundary_guard", "first sample should initialize baseline");
+  }
+
+  if (!write_temp_file(stat_file, "cpu  100 20 30 50 10 0 0 0 0 0\n")) {
+    return fail("test_cpu_sensor_counter_boundary_guard", "failed writing wrapped proc/stat snapshot");
+  }
+
+  if (!sensor.sample(frame) || !almost_equal(frame.cpu, 0.0F)) {
+    return fail("test_cpu_sensor_counter_boundary_guard", "wrapped counters should clamp utilization to zero");
+  }
+
+  std::fclose(stat_file);
+  return 0;
+}
+
 int test_disk_sensor_with_injected_diskstats() {
   std::FILE* diskstats = std::tmpfile();
   if (!write_temp_file(diskstats, "8 0 sda 100 0 0 0 200 0 0 0 1 1000 3000\n8 1 sda1 5 0 0 0 10 0 0 0 0 50 75\n7 0 loop0 11 0 0 0 12 0 0 0 0 40 40\n")) {
@@ -234,6 +258,9 @@ int test_psi_sensor_with_injected_pressure_files() {
 
 int main() {
   if (int rc = test_cpu_sensor_with_injected_proc_stat(); rc != 0) {
+    return rc;
+  }
+  if (int rc = test_cpu_sensor_counter_boundary_guard(); rc != 0) {
     return rc;
   }
   if (int rc = test_disk_sensor_with_injected_diskstats(); rc != 0) {
