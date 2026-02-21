@@ -131,7 +131,7 @@ Requirements:
 * Docker
 * Docker Compose
 
-Run (default profile: `configs/agent.yaml`):
+Run (default profile: `configs/agent.all.debug.yaml`):
 
 ```bash
 cd docker
@@ -212,7 +212,7 @@ The agent ships with four config profiles under `configs/`:
 
 | File | Intended host | Enabled sensors |
 | --- | --- | --- |
-| `agent.yaml` | Generic Linux host with full sensor set and GPU support when available | `psi`, `cpu`, `interrupts`, `softirqs`, `memory`, `disk`, `network`, `tegrastats`, `thermal`, `power`, `cpufreq`, `gpu` |
+| `agent.all.debug.yaml` | Generic Linux host with full sensor set and GPU support when available | `psi`, `cpu`, `interrupts`, `softirqs`, `memory`, `disk`, `network`, `tegrastats`, `thermal`, `power`, `cpufreq`, `gpu` |
 | `agent.cpu-only.yaml` | CPU-only hosts (no GPU metrics) | `psi`, `cpu`, `interrupts`, `softirqs`, `memory`, `disk`, `network`, `thermal`, `power`, `cpufreq` |
 | `agent.cpu-discrete-gpu.yaml` | x86/ARM hosts with discrete GPU via NVML | `psi`, `cpu`, `interrupts`, `softirqs`, `memory`, `disk`, `network`, `thermal`, `power`, `cpufreq`, `gpu` |
 | `agent.cpu-tegrastats-jetson.yaml` | NVIDIA Jetson hosts using tegrastats integration | `psi`, `cpu`, `interrupts`, `softirqs`, `memory`, `disk`, `network`, `tegrastats`, `thermal`, `power`, `cpufreq` |
@@ -227,7 +227,7 @@ AGENT_CONFIG=agent.cpu-tegrastats-jetson.yaml docker compose up --build
 To run without Docker, pass the config file path directly:
 
 ```bash
-./hw_agent configs/agent.yaml
+./hw_agent configs/agent.all.debug.yaml
 ```
 
 ---

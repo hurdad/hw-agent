@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
   std::signal(SIGINT, handle_shutdown_signal);
   std::signal(SIGTERM, handle_shutdown_signal);
 
-  const std::string config_path = argc > 1 ? argv[1] : "configs/agent.yaml";
+  const std::string config_path = argc > 1 ? argv[1] : "configs/agent.all.debug.yaml";
 
   hw_agent::core::AgentConfig config{};
   try {
