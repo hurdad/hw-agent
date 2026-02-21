@@ -10,6 +10,7 @@ namespace hw_agent::sensors {
 class InterruptsSensor {
  public:
   InterruptsSensor();
+  explicit InterruptsSensor(std::FILE* file, bool owns_file = false);
   ~InterruptsSensor();
 
   InterruptsSensor(const InterruptsSensor&) = delete;
@@ -21,6 +22,7 @@ class InterruptsSensor {
   static constexpr std::size_t kReadBufferSize = 256;
 
   std::FILE* file_{nullptr};
+  bool owns_file_{true};
   std::uint64_t prev_total_{0};
   std::uint64_t prev_timestamp_ns_{0};
   bool has_prev_{false};

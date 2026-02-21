@@ -8,12 +8,15 @@ namespace hw_agent::sensors {
 
 MemorySensor::MemorySensor() : meminfo_(std::fopen("/proc/meminfo", "r")), vmstat_(std::fopen("/proc/vmstat", "r")) {}
 
+MemorySensor::MemorySensor(std::FILE* meminfo, std::FILE* vmstat, const bool owns_files)
+    : meminfo_(meminfo), vmstat_(vmstat), owns_files_(owns_files) {}
+
 MemorySensor::~MemorySensor() {
-  if (meminfo_ != nullptr) {
+  if (owns_files_ && meminfo_ != nullptr) {
     std::fclose(meminfo_);
     meminfo_ = nullptr;
   }
-  if (vmstat_ != nullptr) {
+  if (owns_files_ && vmstat_ != nullptr) {
     std::fclose(vmstat_);
     vmstat_ = nullptr;
   }
@@ -36,7 +39,11 @@ void MemorySensor::sample(model::signal_frame& frame) noexcept {
     has_prev_ = true;
     raw_.reclaim_activity = 0.0F;
   } else {
-    raw_.reclaim_activity = static_cast<float>(raw_.pgsteal_total - prev_pgsteal_total_);
+    if (raw_.pgsteal_total >= prev_pgsteal_total_) {
+      raw_.reclaim_activity = static_cast<float>(raw_.pgsteal_total - prev_pgsteal_total_);
+    } else {
+      raw_.reclaim_activity = 0.0F;
+    }
     prev_pgsteal_total_ = raw_.pgsteal_total;
   }
 
