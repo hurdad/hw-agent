@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <sys/types.h>
 #include <unordered_map>
 
 #include "model/signal_frame.hpp"
@@ -36,7 +37,7 @@ class TegraStatsSensor {
   bool parse_line(const std::string& line);
 
   int read_fd_{-1};
-  int child_pid_{-1};
+  pid_t child_pid_{-1};
   bool enabled_{false};
   std::string read_buffer_{};
   RawFields raw_{};

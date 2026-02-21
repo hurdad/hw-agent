@@ -152,7 +152,11 @@ bool TegraStatsSensor::launch(const std::uint32_t interval_ms) noexcept {
   if (pid == 0) {
     close(pipe_fds[0]);
     dup2(pipe_fds[1], STDOUT_FILENO);
-    dup2(pipe_fds[1], STDERR_FILENO);
+    const int null_fd = open("/dev/null", O_WRONLY);
+    if (null_fd >= 0) {
+      dup2(null_fd, STDERR_FILENO);
+      close(null_fd);
+    }
     close(pipe_fds[1]);
 
     const std::string interval = std::to_string(interval_ms);
@@ -171,7 +175,7 @@ bool TegraStatsSensor::launch(const std::uint32_t interval_ms) noexcept {
   }
 
   read_fd_ = pipe_fds[0];
-  child_pid_ = static_cast<int>(pid);
+  child_pid_ = pid;
   return true;
 }
 
@@ -182,7 +186,7 @@ void TegraStatsSensor::disable() noexcept {
   }
 
   if (child_pid_ > 0) {
-    terminate_child_process(static_cast<pid_t>(child_pid_));
+    terminate_child_process(child_pid_);
     child_pid_ = -1;
   }
 
