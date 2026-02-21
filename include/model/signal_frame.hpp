@@ -32,6 +32,7 @@ struct signal_frame {
     float irq;
     float memory;
     float thermal;
+    float cpufreq;
     float power;
     float disk;
     float network;

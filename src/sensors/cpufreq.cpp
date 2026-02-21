@@ -17,19 +17,19 @@ CpuFreqSensor::~CpuFreqSensor() {
 
 void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
   if (file_ == nullptr) {
-    frame.thermal = 0.0F;
+    frame.cpufreq = 0.0F;
     return;
   }
 
   if (std::fseek(file_, 0L, SEEK_SET) != 0) {
-    frame.thermal = 0.0F;
+    frame.cpufreq = 0.0F;
     return;
   }
 
   char buffer[kReadBufferSize]{};
   const std::size_t bytes_read = std::fread(buffer, 1, sizeof(buffer) - 1, file_);
   if (bytes_read == 0U) {
-    frame.thermal = 0.0F;
+    frame.cpufreq = 0.0F;
     return;
   }
   buffer[bytes_read] = '\0';
@@ -63,7 +63,7 @@ void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
   }
 
   if (count == 0) {
-    frame.thermal = 0.0F;
+    frame.cpufreq = 0.0F;
     return;
   }
 
@@ -72,11 +72,11 @@ void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
   if (!has_prev_) {
     has_prev_ = true;
     prev_average_mhz_ = current_average_mhz;
-    frame.thermal = 0.0F;
+    frame.cpufreq = 0.0F;
     return;
   }
 
-  frame.thermal = (prev_average_mhz_ + current_average_mhz) * 0.5F;
+  frame.cpufreq = (prev_average_mhz_ + current_average_mhz) * 0.5F;
   prev_average_mhz_ = current_average_mhz;
 }
 
