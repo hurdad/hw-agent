@@ -27,6 +27,7 @@ endif()
 add_executable(hw_agent
   src/main.cpp
   src/core/agent.cpp
+  src/core/config.cpp
   src/core/sampler.cpp
   src/sensors/tegrastats.cpp
   src/sensors/psi.cpp

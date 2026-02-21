@@ -2,7 +2,12 @@
 
 #include <chrono>
 #include <cstddef>
+#include <functional>
+#include <memory>
+#include <string>
+#include <vector>
 
+#include "core/config.hpp"
 #include "core/sampler.hpp"
 #include "derived/io_pressure.hpp"
 #include "derived/latency_jitter.hpp"
@@ -15,6 +20,7 @@
 #include "risk/saturation_risk.hpp"
 #include "risk/system_state.hpp"
 #include "sensors/cpu.hpp"
+#include "sensors/cpufreq.hpp"
 #include "sensors/disk.hpp"
 #include "sensors/interrupts.hpp"
 #include "sensors/memory.hpp"
@@ -24,6 +30,7 @@
 #include "sensors/softirqs.hpp"
 #include "sensors/tegrastats.hpp"
 #include "sensors/thermal.hpp"
+#include "sinks/redis_ts.hpp"
 #include "sinks/stdout_debug.hpp"
 
 namespace hw_agent::core {
@@ -38,19 +45,30 @@ struct AgentStats {
 
 class Agent {
  public:
-  explicit Agent(std::chrono::milliseconds tick_interval = std::chrono::milliseconds{100});
+  explicit Agent(AgentConfig config = {});
 
   AgentStats run_for_ticks(std::size_t total_ticks);
 
  private:
+  struct SensorRegistration {
+    std::string name;
+    std::uint64_t every_ticks;
+    bool enabled;
+    std::function<void(model::signal_frame&)> sample;
+  };
+
+  void register_sensors(const AgentConfig& config);
+  [[nodiscard]] bool sensor_enabled(const AgentConfig& config, const std::string& name) const;
   void collect_sensors(AgentStats& stats);
   void compute_derived(AgentStats& stats);
   void compute_risk(AgentStats& stats);
   void publish_sinks(AgentStats& stats);
 
-  std::chrono::milliseconds tick_interval_;
+  std::chrono::milliseconds tick_interval_{};
   Sampler sampler_{};
   model::signal_frame frame_{};
+  std::vector<SensorRegistration> sensor_registry_{};
+
   sensors::PsiSensor psi_sensor_{};
   sensors::CpuSensor cpu_sensor_{};
   sensors::InterruptsSensor interrupts_sensor_{};
@@ -61,6 +79,7 @@ class Agent {
   sensors::TegraStatsSensor tegrastats_sensor_{};
   sensors::ThermalSensor thermal_sensor_{};
   sensors::PowerSensor power_sensor_{};
+  sensors::CpuFreqSensor cpufreq_sensor_{};
 
   derived::SchedulerPressure scheduler_pressure_{};
   derived::MemoryPressure memory_pressure_{};
@@ -74,6 +93,7 @@ class Agent {
   risk::SystemState system_state_{};
 
   sinks::StdoutDebugSink stdout_sink_{};
+  std::unique_ptr<sinks::RedisTsSink> redis_sink_{};
 };
 
 }  // namespace hw_agent::core
