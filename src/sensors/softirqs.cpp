@@ -34,19 +34,36 @@ void SoftirqsSensor::sample(model::signal_frame& frame) noexcept {
   buffer[bytes_read] = '\0';
 
   std::uint64_t total_softirqs = 0;
-  const char* cursor = buffer;
-  while (*cursor != '\0') {
-    if (*cursor >= '0' && *cursor <= '9') {
-      char* end = nullptr;
-      errno = 0;
-      const unsigned long long parsed = std::strtoull(cursor, &end, 10);
-      if (errno == 0 && end != cursor) {
-        total_softirqs += parsed;
-        cursor = end;
-        continue;
+  const char* line_start = buffer;
+  while (*line_start != '\0') {
+    const char* line_end = line_start;
+    while (*line_end != '\0' && *line_end != '\n') {
+      ++line_end;
+    }
+
+    const char* cursor = line_start;
+    while (cursor < line_end && *cursor != ':') {
+      ++cursor;
+    }
+
+    if (cursor < line_end && *cursor == ':') {
+      ++cursor;
+      while (cursor < line_end) {
+        if (*cursor >= '0' && *cursor <= '9') {
+          char* end = nullptr;
+          errno = 0;
+          const unsigned long long parsed = std::strtoull(cursor, &end, 10);
+          if (errno == 0 && end != cursor) {
+            total_softirqs += parsed;
+            cursor = end;
+            continue;
+          }
+        }
+        ++cursor;
       }
     }
-    ++cursor;
+
+    line_start = (*line_end == '\n') ? line_end + 1 : line_end;
   }
 
   if (!has_prev_) {
