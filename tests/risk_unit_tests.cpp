@@ -208,6 +208,32 @@ int test_config_rejects_excessive_tick_rate() {
   return 0;
 }
 
+int test_config_rejects_out_of_range_redis_port() {
+  const auto config_path = std::filesystem::temp_directory_path() / "hw_agent_config_bad_redis_port.yaml";
+
+  {
+    std::ofstream out(config_path);
+    out << "redis:\n";
+    out << "  address: localhost:70000\n";
+  }
+
+  bool threw = false;
+  try {
+    (void)load_agent_config(config_path.string());
+  } catch (const std::runtime_error&) {
+    threw = true;
+  }
+
+  std::error_code ec;
+  std::filesystem::remove(config_path, ec);
+
+  if (!threw) {
+    return fail("test_config_rejects_out_of_range_redis_port", "expected load_agent_config to reject redis port > 65535");
+  }
+
+  return 0;
+}
+
 }  // namespace
 
 int main() {
@@ -224,6 +250,9 @@ int main() {
     return rc;
   }
   if (int rc = test_config_rejects_excessive_tick_rate(); rc != 0) {
+    return rc;
+  }
+  if (int rc = test_config_rejects_out_of_range_redis_port(); rc != 0) {
     return rc;
   }
 
