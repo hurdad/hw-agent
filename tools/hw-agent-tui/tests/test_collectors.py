@@ -7,12 +7,18 @@ class FakeRedis:
         self._series = {
             "edge:node:raw:cpu": [1000, "0.21"],
             "edge:node:agent:missed_cycles": [1000, "2"],
+            "edge:node:custom:temperature": [1000, "42"],
             "other:key": [1000, "999"],
         }
 
     def scan_iter(self, match: str):
         assert match == "edge:node:*"
-        return ["edge:node:raw:cpu", "edge:node:agent:missed_cycles", "edge:node:metadata"]
+        return [
+            "edge:node:raw:cpu",
+            "edge:node:agent:missed_cycles",
+            "edge:node:custom:temperature",
+            "edge:node:metadata",
+        ]
 
     def execute_command(self, command: str, key: str):
         assert command == "TS.GET"
