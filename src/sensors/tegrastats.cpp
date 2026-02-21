@@ -47,9 +47,9 @@ TegraStatsSensor::TegraStatsSensor(const std::uint32_t interval_ms) noexcept {
 
 TegraStatsSensor::~TegraStatsSensor() { disable(); }
 
-void TegraStatsSensor::sample(model::signal_frame& frame) noexcept {
+bool TegraStatsSensor::sample(model::signal_frame& frame) noexcept {
   if (!enabled_) {
-    return;
+    return false;
   }
 
   char chunk[4096]{};
@@ -67,7 +67,7 @@ void TegraStatsSensor::sample(model::signal_frame& frame) noexcept {
           parsed_at_least_one_line = parse_line(line) || parsed_at_least_one_line;
         } catch (...) {
           disable();
-          return;
+          return false;
         }
         newline_pos = read_buffer_.find('\n');
       }
@@ -76,7 +76,7 @@ void TegraStatsSensor::sample(model::signal_frame& frame) noexcept {
 
     if (bytes_read == 0) {
       disable();
-      return;
+      return false;
     }
 
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -84,7 +84,7 @@ void TegraStatsSensor::sample(model::signal_frame& frame) noexcept {
     }
 
     disable();
-    return;
+    return false;
   }
 
   if (!parsed_at_least_one_line) {
@@ -106,6 +106,8 @@ void TegraStatsSensor::sample(model::signal_frame& frame) noexcept {
   if (raw_.total_rail_power_mw > 0.0F) {
     frame.gpu_power_ratio = raw_.total_rail_power_mw;
   }
+
+  return true;
 }
 
 bool TegraStatsSensor::enabled() const noexcept { return enabled_; }

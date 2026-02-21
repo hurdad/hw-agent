@@ -15,15 +15,15 @@ CpuFreqSensor::~CpuFreqSensor() {
   }
 }
 
-void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
+bool CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
   if (file_ == nullptr) {
     frame.cpufreq = 0.0F;
-    return;
+    return false;
   }
 
   if (std::fseek(file_, 0L, SEEK_SET) != 0) {
     frame.cpufreq = 0.0F;
-    return;
+    return false;
   }
 
   constexpr char needle[] = "cpu MHz";
@@ -50,7 +50,7 @@ void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
 
   if (count == 0) {
     frame.cpufreq = 0.0F;
-    return;
+    return true;
   }
 
   const float current_average_mhz = static_cast<float>(total_mhz / static_cast<double>(count));
@@ -64,6 +64,7 @@ void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
   }
 
   frame.cpufreq = ema_mhz_;
+  return true;
 }
 
 }  // namespace hw_agent::sensors

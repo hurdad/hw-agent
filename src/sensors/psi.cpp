@@ -22,25 +22,29 @@ PsiSensor::~PsiSensor() {
   }
 }
 
-void PsiSensor::sample(model::signal_frame& frame) noexcept {
-  const float cpu_avg10 = read_avg10(sources_[0]);
-  const float memory_avg10 = read_avg10(sources_[1]);
-  const float io_avg10 = read_avg10(sources_[2]);
+bool PsiSensor::sample(model::signal_frame& frame) noexcept {
+  float cpu_avg10 = 0.0F;
+  float memory_avg10 = 0.0F;
+  float io_avg10 = 0.0F;
+  const bool cpu_ok = read_avg10(sources_[0], cpu_avg10);
+  const bool memory_ok = read_avg10(sources_[1], memory_avg10);
+  const bool io_ok = read_avg10(sources_[2], io_avg10);
 
-  // Keep frame.psi mapped to CPU PSI for backward compatibility and publish
-  // memory/io PSI in dedicated fields for derived scoring.
   frame.psi = cpu_avg10;
   frame.psi_memory = memory_avg10;
   frame.psi_io = io_avg10;
+  return cpu_ok && memory_ok && io_ok;
 }
 
-float PsiSensor::read_avg10(Source& source) noexcept {
+bool PsiSensor::read_avg10(Source& source, float& value) noexcept {
   if (source.file == nullptr) {
-    return 0.0F;
+    value = 0.0F;
+    return false;
   }
 
   if (std::fseek(source.file, 0L, SEEK_SET) != 0) {
-    return 0.0F;
+    value = 0.0F;
+    return false;
   }
 
   char buffer[kReadBufferSize]{};
@@ -49,10 +53,12 @@ float PsiSensor::read_avg10(Source& source) noexcept {
     if (std::ferror(source.file) != 0) {
       std::clearerr(source.file);
     }
-    return 0.0F;
+    value = 0.0F;
+    return false;
   }
 
-  return parse_avg10(buffer, bytes_read);
+  value = parse_avg10(buffer, bytes_read);
+  return true;
 }
 
 float PsiSensor::parse_avg10(const char* data, const std::size_t size) noexcept {

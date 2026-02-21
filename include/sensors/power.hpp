@@ -24,7 +24,7 @@ class PowerSensor {
   PowerSensor(PowerSensor&&) = delete;
   PowerSensor& operator=(PowerSensor&&) = delete;
 
-  void sample(model::signal_frame& frame) noexcept;
+  bool sample(model::signal_frame& frame) noexcept;
   const RawFields& raw() const noexcept;
 
  private:
@@ -38,7 +38,7 @@ class PowerSensor {
     bool has_prev_counts{false};
   };
 
-  static std::uint64_t read_u64_file(std::FILE* file) noexcept;
+  static bool read_u64_file(std::FILE* file, std::uint64_t& value) noexcept;
 
   std::vector<ThermalThrottleSource> cores_{};
   RawFields raw_{};

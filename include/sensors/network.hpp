@@ -26,7 +26,7 @@ class NetworkSensor {
   NetworkSensor(NetworkSensor&&) = delete;
   NetworkSensor& operator=(NetworkSensor&&) = delete;
 
-  void sample(model::signal_frame& frame) noexcept;
+  bool sample(model::signal_frame& frame) noexcept;
   const RawFields& raw() const noexcept;
 
  private:
@@ -37,7 +37,7 @@ class NetworkSensor {
     std::FILE* tx_dropped_file{nullptr};
   };
 
-  static std::uint64_t read_u64_file(std::FILE* file) noexcept;
+  static bool read_u64_file(std::FILE* file, std::uint64_t& value) noexcept;
 
   std::vector<InterfaceSource> interfaces_{};
   RawFields raw_{};

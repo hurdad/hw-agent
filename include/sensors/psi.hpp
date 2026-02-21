@@ -15,7 +15,7 @@ class PsiSensor {
   PsiSensor(const PsiSensor&) = delete;
   PsiSensor& operator=(const PsiSensor&) = delete;
 
-  void sample(model::signal_frame& frame) noexcept;
+  bool sample(model::signal_frame& frame) noexcept;
 
  private:
   static constexpr std::size_t kReadBufferSize = 256;
@@ -25,7 +25,7 @@ class PsiSensor {
     std::FILE* file;
   };
 
-  float read_avg10(Source& source) noexcept;
+  bool read_avg10(Source& source, float& value) noexcept;
   static float parse_avg10(const char* data, std::size_t size) noexcept;
 
   std::array<Source, 3> sources_;

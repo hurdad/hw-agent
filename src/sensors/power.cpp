@@ -77,13 +77,16 @@ PowerSensor::~PowerSensor() {
   }
 }
 
-void PowerSensor::sample(model::signal_frame& frame) noexcept {
+bool PowerSensor::sample(model::signal_frame& frame) noexcept {
   raw_ = {};
   raw_.total_cores = cores_.size();
 
+  bool all_reads_ok = true;
   for (ThermalThrottleSource& core : cores_) {
-    const std::uint64_t core_throttle_count = read_u64_file(core.core_throttle_count_file);
-    const std::uint64_t package_throttle_count = read_u64_file(core.package_throttle_count_file);
+    std::uint64_t core_throttle_count = 0;
+    std::uint64_t package_throttle_count = 0;
+    all_reads_ok = read_u64_file(core.core_throttle_count_file, core_throttle_count) && all_reads_ok;
+    all_reads_ok = read_u64_file(core.package_throttle_count_file, package_throttle_count) && all_reads_ok;
 
     if (!core.has_prev_counts) {
       core.prev_core_throttle_count = core_throttle_count;
@@ -106,26 +109,31 @@ void PowerSensor::sample(model::signal_frame& frame) noexcept {
   }
 
   frame.power = raw_.throttle_ratio;
+  return all_reads_ok;
 }
 
 const PowerSensor::RawFields& PowerSensor::raw() const noexcept { return raw_; }
 
-std::uint64_t PowerSensor::read_u64_file(std::FILE* file) noexcept {
+bool PowerSensor::read_u64_file(std::FILE* file, std::uint64_t& value) noexcept {
   if (file == nullptr) {
-    return 0;
+    value = 0;
+    return false;
   }
 
   if (std::fseek(file, 0L, SEEK_SET) != 0) {
-    return 0;
+    value = 0;
+    return false;
   }
 
-  unsigned long long value = 0;
-  if (std::fscanf(file, "%llu", &value) != 1) {
+  unsigned long long parsed = 0;
+  if (std::fscanf(file, "%llu", &parsed) != 1) {
     std::clearerr(file);
-    return 0;
+    value = 0;
+    return false;
   }
 
-  return value;
+  value = static_cast<std::uint64_t>(parsed);
+  return true;
 }
 
 }  // namespace hw_agent::sensors

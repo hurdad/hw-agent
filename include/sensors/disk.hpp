@@ -24,7 +24,7 @@ class DiskSensor {
   DiskSensor(const DiskSensor&) = delete;
   DiskSensor& operator=(const DiskSensor&) = delete;
 
-  void sample(model::signal_frame& frame) noexcept;
+  bool sample(model::signal_frame& frame) noexcept;
   const RawFields& raw() const noexcept;
 
  private:

@@ -28,7 +28,7 @@ class MemorySensor {
   MemorySensor(const MemorySensor&) = delete;
   MemorySensor& operator=(const MemorySensor&) = delete;
 
-  void sample(model::signal_frame& frame) noexcept;
+  bool sample(model::signal_frame& frame) noexcept;
   const RawFields& raw() const noexcept;
 
  private:

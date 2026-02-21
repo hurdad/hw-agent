@@ -22,13 +22,13 @@ MemorySensor::~MemorySensor() {
   }
 }
 
-void MemorySensor::sample(model::signal_frame& frame) noexcept {
+bool MemorySensor::sample(model::signal_frame& frame) noexcept {
   const bool meminfo_ok = parse_meminfo();
   const bool vmstat_ok = parse_vmstat();
 
   if (!meminfo_ok || !vmstat_ok) {
     frame.memory = 0.0F;
-    return;
+    return false;
   }
 
   const std::uint64_t dirty_and_writeback = raw_.dirty_kb + raw_.writeback_kb;
@@ -48,6 +48,7 @@ void MemorySensor::sample(model::signal_frame& frame) noexcept {
   }
 
   frame.memory = raw_.dirty_writeback_pressure;
+  return true;
 }
 
 const MemorySensor::RawFields& MemorySensor::raw() const noexcept { return raw_; }
