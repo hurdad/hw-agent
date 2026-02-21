@@ -9,8 +9,6 @@ namespace hw_agent::sensors {
 PsiSensor::PsiSensor()
     : sources_{{
           {"/proc/pressure/cpu", std::fopen("/proc/pressure/cpu", "r")},
-          {"/proc/pressure/memory", std::fopen("/proc/pressure/memory", "r")},
-          {"/proc/pressure/io", std::fopen("/proc/pressure/io", "r")},
       }} {}
 
 PsiSensor::~PsiSensor() {
