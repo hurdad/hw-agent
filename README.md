@@ -97,11 +97,18 @@ Requirements:
 * Docker
 * Docker Compose
 
-Run:
+Run (default, no GPU requirements):
 
 ```bash
 cd docker
 docker compose up --build
+```
+
+Run with GPU support (NVIDIA):
+
+```bash
+cd docker
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
 ```
 
 Open Grafana:
