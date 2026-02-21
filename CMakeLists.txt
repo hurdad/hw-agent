@@ -100,6 +100,12 @@ add_executable(hw_agent_agent_unit_tests
   src/sensors/memory.cpp
   src/sensors/interrupts.cpp
   src/sensors/softirqs.cpp
+  src/sensors/cpu.cpp
+  src/sensors/disk.cpp
+  src/sensors/thermal.cpp
+  src/sensors/power.cpp
+  src/sensors/cpufreq.cpp
+  src/sensors/psi.cpp
   src/sinks/redis_ts.cpp
 )
 

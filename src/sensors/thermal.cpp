@@ -5,6 +5,7 @@
 #include <fstream>
 #include <limits>
 #include <memory>
+#include <utility>
 
 namespace hw_agent::sensors {
 
@@ -60,9 +61,21 @@ ThermalSensor::ThermalSensor(const float throttle_temp_c) {
   }
 }
 
+
+ThermalSensor::ThermalSensor(const float throttle_temp_c, std::vector<ZoneHandle> zones, const bool owns_files)
+    : owns_files_(owns_files) {
+  raw_.throttle_temp_c = throttle_temp_c;
+  for (auto& zone : zones) {
+    ZoneSource source{};
+    source.name = std::move(zone.name);
+    source.file = zone.file;
+    zones_.push_back(std::move(source));
+  }
+}
+
 ThermalSensor::~ThermalSensor() {
   for (ZoneSource& zone : zones_) {
-    if (zone.file != nullptr) {
+    if (owns_files_ && zone.file != nullptr) {
       std::fclose(zone.file);
       zone.file = nullptr;
     }

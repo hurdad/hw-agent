@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include <unistd.h>
 
@@ -16,6 +17,12 @@
 #include "core/config.hpp"
 #include "core/sampler.hpp"
 #include "derived/memory_pressure.hpp"
+#include "sensors/thermal.hpp"
+#include "sensors/psi.hpp"
+#include "sensors/power.hpp"
+#include "sensors/disk.hpp"
+#include "sensors/cpufreq.hpp"
+#include "sensors/cpu.hpp"
 #include "model/signal_frame.hpp"
 #include "sensors/interrupts.hpp"
 #include "sensors/memory.hpp"
@@ -26,9 +33,15 @@ using hw_agent::core::Sampler;
 using hw_agent::core::load_agent_config;
 using hw_agent::derived::MemoryPressure;
 using hw_agent::model::signal_frame;
+using hw_agent::sensors::CpuFreqSensor;
+using hw_agent::sensors::CpuSensor;
+using hw_agent::sensors::DiskSensor;
 using hw_agent::sensors::InterruptsSensor;
 using hw_agent::sensors::MemorySensor;
+using hw_agent::sensors::PowerSensor;
+using hw_agent::sensors::PsiSensor;
 using hw_agent::sensors::SoftirqsSensor;
+using hw_agent::sensors::ThermalSensor;
 using hw_agent::sinks::RedisTsOptions;
 using hw_agent::sinks::RedisTsSink;
 
@@ -286,6 +299,155 @@ int test_interrupts_and_softirqs_delta_and_underflow_protection() {
 }
 
 
+int test_cpu_sensor_with_injected_proc_stat() {
+  std::FILE* proc_stat = std::tmpfile();
+  if (!write_temp_file(proc_stat, "cpu  100 0 100 100 0 0 0 0 0 0\n")) {
+    return fail("test_cpu_sensor_with_injected_proc_stat", "failed to write initial /proc/stat sample");
+  }
+
+  CpuSensor sensor(proc_stat, true);
+  signal_frame frame{};
+  sensor.sample(frame);
+
+  if (!almost_equal(frame.cpu, 0.0F)) {
+    return fail("test_cpu_sensor_with_injected_proc_stat", "first sample should initialize baseline");
+  }
+
+  if (!write_temp_file(proc_stat, "cpu  150 0 100 120 0 0 0 0 0 0\n")) {
+    return fail("test_cpu_sensor_with_injected_proc_stat", "failed to write second /proc/stat sample");
+  }
+
+  sensor.sample(frame);
+  if (!almost_equal(frame.cpu, 71.4286F, 1e-3F)) {
+    return fail("test_cpu_sensor_with_injected_proc_stat", "cpu utilization delta parsing mismatch");
+  }
+
+  return 0;
+}
+
+int test_disk_sensor_with_injected_diskstats() {
+  std::FILE* diskstats = std::tmpfile();
+  if (!write_temp_file(diskstats,
+                       "7 0 loop0 1 0 1 1 1 0 1 1 0 1 1\n"
+                       "8 0 sda 100 0 0 0 200 0 0 0 0 300 500\n"
+                       "8 1 sda1 10 0 0 0 10 0 0 0 0 10 10\n")) {
+    return fail("test_disk_sensor_with_injected_diskstats", "failed to write initial /proc/diskstats sample");
+  }
+
+  DiskSensor sensor(diskstats, true);
+  signal_frame frame{};
+  sensor.sample(frame);
+
+  if (!almost_equal(frame.disk, 0.0F)) {
+    return fail("test_disk_sensor_with_injected_diskstats", "first sample should initialize baseline");
+  }
+
+  if (!write_temp_file(diskstats,
+                       "8 0 sda 130 0 0 0 230 0 0 0 0 350 620\n")) {
+    return fail("test_disk_sensor_with_injected_diskstats", "failed to write second /proc/diskstats sample");
+  }
+
+  sensor.sample(frame);
+  if (!almost_equal(frame.disk, 2.0F)) {
+    return fail("test_disk_sensor_with_injected_diskstats", "disk wait estimation mismatch");
+  }
+
+  return 0;
+}
+
+int test_thermal_and_power_sensors_with_injected_files() {
+  std::FILE* zone0 = std::tmpfile();
+  std::FILE* zone1 = std::tmpfile();
+  if (!write_temp_file(zone0, "70000\n") || !write_temp_file(zone1, "82000\n")) {
+    return fail("test_thermal_and_power_sensors_with_injected_files", "failed to write thermal zone samples");
+  }
+
+  std::vector<ThermalSensor::ZoneHandle> zones;
+  zones.push_back({"cpu", zone0});
+  zones.push_back({"gpu", zone1});
+  ThermalSensor thermal(90.0F, std::move(zones), true);
+
+  signal_frame frame{};
+  thermal.sample(frame);
+  if (!almost_equal(frame.thermal, 8.0F) || thermal.raw().hottest_zone != "gpu") {
+    return fail("test_thermal_and_power_sensors_with_injected_files", "thermal headroom or hottest zone mismatch");
+  }
+
+  std::FILE* core0 = std::tmpfile();
+  std::FILE* pkg0 = std::tmpfile();
+  std::FILE* core1 = std::tmpfile();
+  std::FILE* pkg1 = std::tmpfile();
+
+  if (!write_temp_file(core0, "1\n") || !write_temp_file(pkg0, "1\n") || !write_temp_file(core1, "5\n") ||
+      !write_temp_file(pkg1, "2\n")) {
+    return fail("test_thermal_and_power_sensors_with_injected_files", "failed to write initial power samples");
+  }
+
+  std::vector<PowerSensor::CoreThrottleFiles> cores;
+  cores.push_back({core0, pkg0});
+  cores.push_back({core1, pkg1});
+  PowerSensor power(std::move(cores), true);
+
+  power.sample(frame);
+  if (!almost_equal(frame.power, 0.0F)) {
+    return fail("test_thermal_and_power_sensors_with_injected_files", "first power sample should initialize baseline");
+  }
+
+  if (!write_temp_file(core0, "2\n") || !write_temp_file(pkg0, "1\n") || !write_temp_file(core1, "5\n") ||
+      !write_temp_file(pkg1, "3\n")) {
+    return fail("test_thermal_and_power_sensors_with_injected_files", "failed to write second power samples");
+  }
+
+  power.sample(frame);
+  if (!almost_equal(frame.power, 1.0F) || power.raw().throttled_cores != 2) {
+    return fail("test_thermal_and_power_sensors_with_injected_files", "power throttle ratio mismatch");
+  }
+
+  return 0;
+}
+
+int test_cpufreq_and_psi_sensors_with_injected_files() {
+  std::FILE* cpuinfo = std::tmpfile();
+  if (!write_temp_file(cpuinfo, "cpu MHz\t\t: 1000.0\ncpu MHz\t\t: 2000.0\n")) {
+    return fail("test_cpufreq_and_psi_sensors_with_injected_files", "failed to write initial /proc/cpuinfo sample");
+  }
+
+  CpuFreqSensor cpufreq(cpuinfo, true);
+  signal_frame frame{};
+  cpufreq.sample(frame);
+  if (!almost_equal(frame.cpufreq, 1500.0F)) {
+    return fail("test_cpufreq_and_psi_sensors_with_injected_files", "first cpufreq average mismatch");
+  }
+
+  if (!write_temp_file(cpuinfo, "cpu MHz\t\t: 3000.0\ncpu MHz\t\t: 3000.0\n")) {
+    return fail("test_cpufreq_and_psi_sensors_with_injected_files", "failed to write second /proc/cpuinfo sample");
+  }
+
+  cpufreq.sample(frame);
+  if (!almost_equal(frame.cpufreq, 1875.0F)) {
+    return fail("test_cpufreq_and_psi_sensors_with_injected_files", "cpufreq EMA mismatch");
+  }
+
+  std::FILE* psi_cpu = std::tmpfile();
+  std::FILE* psi_mem = std::tmpfile();
+  std::FILE* psi_io = std::tmpfile();
+  if (!write_temp_file(psi_cpu, "some avg10=1.23 avg60=0 avg300=0 total=1\n") ||
+      !write_temp_file(psi_mem, "full avg10=2.50 avg60=0 avg300=0 total=1\n") ||
+      !write_temp_file(psi_io, "some avg10=3.75 avg60=0 avg300=0 total=1\n")) {
+    return fail("test_cpufreq_and_psi_sensors_with_injected_files", "failed to write PSI samples");
+  }
+
+  PsiSensor psi(psi_cpu, psi_mem, psi_io, true);
+  psi.sample(frame);
+
+  if (!almost_equal(frame.psi, 1.23F) || !almost_equal(frame.psi_memory, 2.50F) ||
+      !almost_equal(frame.psi_io, 3.75F)) {
+    return fail("test_cpufreq_and_psi_sensors_with_injected_files", "PSI avg10 parsing mismatch");
+  }
+
+  return 0;
+}
+
 int test_gpu_memory_and_emc_metrics_are_distinct() {
   g_redis_mock = {};
 
@@ -390,6 +552,10 @@ int main() {
   if (int rc = test_sampler_should_sample_every(); rc != 0) return rc;
   if (int rc = test_config_parsing_edge_cases(); rc != 0) return rc;
   if (int rc = test_interrupts_and_softirqs_delta_and_underflow_protection(); rc != 0) return rc;
+  if (int rc = test_cpu_sensor_with_injected_proc_stat(); rc != 0) return rc;
+  if (int rc = test_disk_sensor_with_injected_diskstats(); rc != 0) return rc;
+  if (int rc = test_thermal_and_power_sensors_with_injected_files(); rc != 0) return rc;
+  if (int rc = test_cpufreq_and_psi_sensors_with_injected_files(); rc != 0) return rc;
   if (int rc = test_redis_sink_publish_logic(); rc != 0) return rc;
   if (int rc = test_redis_health_metrics_include_error_counter(); rc != 0) return rc;
   if (int rc = test_gpu_memory_and_emc_metrics_are_distinct(); rc != 0) return rc;

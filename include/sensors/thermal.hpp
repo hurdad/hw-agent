@@ -10,6 +10,11 @@ namespace hw_agent::sensors {
 
 class ThermalSensor {
  public:
+  struct ZoneHandle {
+    std::string name{};
+    std::FILE* file{nullptr};
+  };
+
   struct RawFields {
     std::string hottest_zone{};
     float hottest_temp_c{0.0F};
@@ -18,6 +23,7 @@ class ThermalSensor {
   };
 
   explicit ThermalSensor(float throttle_temp_c = 85.0F);
+  ThermalSensor(float throttle_temp_c, std::vector<ZoneHandle> zones, bool owns_files = false);
   ~ThermalSensor();
 
   ThermalSensor(const ThermalSensor&) = delete;
@@ -39,6 +45,7 @@ class ThermalSensor {
   static float read_temp_c(std::FILE* file) noexcept;
 
   std::vector<ZoneSource> zones_{};
+  bool owns_files_{true};
   RawFields raw_{};
 };
 

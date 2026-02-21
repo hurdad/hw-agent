@@ -19,6 +19,7 @@ class DiskSensor {
   };
 
   DiskSensor();
+  explicit DiskSensor(std::FILE* diskstats, bool owns_file = false);
   ~DiskSensor();
 
   DiskSensor(const DiskSensor&) = delete;
@@ -31,6 +32,7 @@ class DiskSensor {
   static constexpr std::size_t kReadBufferSize = 512;
 
   std::FILE* diskstats_{nullptr};
+  bool owns_file_{true};
   RawFields raw_{};
   std::uint64_t prev_completed_{0};
   std::uint64_t prev_weighted_io_ms_{0};

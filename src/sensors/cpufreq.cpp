@@ -8,8 +8,10 @@ namespace hw_agent::sensors {
 
 CpuFreqSensor::CpuFreqSensor() : file_(std::fopen("/proc/cpuinfo", "r")) {}
 
+CpuFreqSensor::CpuFreqSensor(std::FILE* file, const bool owns_file) : file_(file), owns_file_(owns_file) {}
+
 CpuFreqSensor::~CpuFreqSensor() {
-  if (file_ != nullptr) {
+  if (owns_file_ && file_ != nullptr) {
     std::fclose(file_);
     file_ = nullptr;
   }

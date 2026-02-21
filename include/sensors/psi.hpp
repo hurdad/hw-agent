@@ -10,6 +10,7 @@ namespace hw_agent::sensors {
 class PsiSensor {
  public:
   PsiSensor();
+  PsiSensor(std::FILE* cpu, std::FILE* memory, std::FILE* io, bool owns_files = false);
   ~PsiSensor();
 
   PsiSensor(const PsiSensor&) = delete;
@@ -29,6 +30,7 @@ class PsiSensor {
   static float parse_avg10(const char* data, std::size_t size) noexcept;
 
   std::array<Source, 3> sources_;
+  bool owns_files_{true};
 };
 
 }  // namespace hw_agent::sensors

@@ -10,6 +10,7 @@ namespace hw_agent::sensors {
 class CpuSensor {
  public:
   CpuSensor();
+  explicit CpuSensor(std::FILE* file, bool owns_file = false);
   ~CpuSensor();
 
   CpuSensor(const CpuSensor&) = delete;
@@ -21,6 +22,7 @@ class CpuSensor {
   static constexpr std::size_t kReadBufferSize = 512;
 
   std::FILE* file_{nullptr};
+  bool owns_file_{true};
   std::uint64_t prev_total_{0};
   std::uint64_t prev_idle_{0};
   bool has_prev_{false};

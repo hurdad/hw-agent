@@ -64,13 +64,26 @@ PowerSensor::PowerSensor() {
   }
 }
 
+
+PowerSensor::PowerSensor(std::vector<CoreThrottleFiles> cores, const bool owns_files) : owns_files_(owns_files) {
+  for (const auto& core : cores) {
+    ThermalThrottleSource source{};
+    source.core_throttle_count_file = core.core_throttle_count_file;
+    source.package_throttle_count_file = core.package_throttle_count_file;
+    if (source.core_throttle_count_file == nullptr && source.package_throttle_count_file == nullptr) {
+      continue;
+    }
+    cores_.push_back(source);
+  }
+}
+
 PowerSensor::~PowerSensor() {
   for (ThermalThrottleSource& core : cores_) {
-    if (core.core_throttle_count_file != nullptr) {
+    if (owns_files_ && core.core_throttle_count_file != nullptr) {
       std::fclose(core.core_throttle_count_file);
       core.core_throttle_count_file = nullptr;
     }
-    if (core.package_throttle_count_file != nullptr) {
+    if (owns_files_ && core.package_throttle_count_file != nullptr) {
       std::fclose(core.package_throttle_count_file);
       core.package_throttle_count_file = nullptr;
     }

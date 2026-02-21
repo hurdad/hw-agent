@@ -13,9 +13,18 @@ PsiSensor::PsiSensor()
           {"/proc/pressure/io", std::fopen("/proc/pressure/io", "r")},
       }} {}
 
+
+PsiSensor::PsiSensor(std::FILE* cpu, std::FILE* memory, std::FILE* io, const bool owns_files)
+    : sources_{{
+          {"/proc/pressure/cpu", cpu},
+          {"/proc/pressure/memory", memory},
+          {"/proc/pressure/io", io},
+      }},
+      owns_files_(owns_files) {}
+
 PsiSensor::~PsiSensor() {
   for (auto& source : sources_) {
-    if (source.file != nullptr) {
+    if (owns_files_ && source.file != nullptr) {
       std::fclose(source.file);
       source.file = nullptr;
     }

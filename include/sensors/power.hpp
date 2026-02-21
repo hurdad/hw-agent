@@ -10,6 +10,11 @@ namespace hw_agent::sensors {
 
 class PowerSensor {
  public:
+  struct CoreThrottleFiles {
+    std::FILE* core_throttle_count_file{nullptr};
+    std::FILE* package_throttle_count_file{nullptr};
+  };
+
   struct RawFields {
     std::uint64_t throttled_cores{0};
     std::uint64_t total_cores{0};
@@ -17,6 +22,7 @@ class PowerSensor {
   };
 
   PowerSensor();
+  explicit PowerSensor(std::vector<CoreThrottleFiles> cores, bool owns_files = false);
   ~PowerSensor();
 
   PowerSensor(const PowerSensor&) = delete;
@@ -41,6 +47,7 @@ class PowerSensor {
   static std::uint64_t read_u64_file(std::FILE* file) noexcept;
 
   std::vector<ThermalThrottleSource> cores_{};
+  bool owns_files_{true};
   RawFields raw_{};
 };
 
