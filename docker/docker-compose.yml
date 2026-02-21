@@ -5,15 +5,7 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
-      - ./init-redis.sh:/usr/local/bin/init-redis.sh:ro
-    command:
-      - /bin/sh
-      - -c
-      - |
-        redis-stack-server --dir /data --appendonly yes &
-        redis_pid=$$!
-        /usr/local/bin/init-redis.sh
-        wait $$redis_pid
+    command: ["redis-stack-server", "--dir", "/data", "--appendonly", "yes"]
 
   grafana:
     image: grafana/grafana:latest
