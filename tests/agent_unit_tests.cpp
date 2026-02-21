@@ -15,22 +15,43 @@
 
 #include "core/config.hpp"
 #include "core/sampler.hpp"
+#include "derived/io_pressure.hpp"
+#include "derived/latency_jitter.hpp"
 #include "derived/memory_pressure.hpp"
+#include "derived/power_pressure.hpp"
+#include "derived/scheduler_pressure.hpp"
 #include "derived/thermal_pressure.hpp"
 #include "model/signal_frame.hpp"
+#include "risk/realtime_risk.hpp"
+#include "risk/saturation_risk.hpp"
+#include "risk/system_state.hpp"
+#include "sensors/cpu.hpp"
 #include "sensors/interrupts.hpp"
 #include "sensors/memory.hpp"
+#include "sensors/power.hpp"
+#include "sensors/psi.hpp"
 #include "sensors/softirqs.hpp"
 #include "sensors/thermal.hpp"
 #include "sinks/redis_ts.hpp"
 
 using hw_agent::core::Sampler;
 using hw_agent::core::load_agent_config;
+using hw_agent::derived::IoPressure;
+using hw_agent::derived::LatencyJitter;
 using hw_agent::derived::MemoryPressure;
+using hw_agent::derived::PowerPressure;
+using hw_agent::derived::SchedulerPressure;
 using hw_agent::derived::ThermalPressure;
 using hw_agent::model::signal_frame;
+using hw_agent::model::system_state;
+using hw_agent::risk::RealtimeRisk;
+using hw_agent::risk::SaturationRisk;
+using hw_agent::risk::SystemState;
+using hw_agent::sensors::CpuSensor;
 using hw_agent::sensors::InterruptsSensor;
 using hw_agent::sensors::MemorySensor;
+using hw_agent::sensors::PowerSensor;
+using hw_agent::sensors::PsiSensor;
 using hw_agent::sensors::SoftirqsSensor;
 using hw_agent::sensors::ThermalSensor;
 using hw_agent::sinks::RedisTsOptions;
@@ -541,6 +562,131 @@ int test_redis_sink_publish_logic() {
   return 0;
 }
 
+int test_end_to_end_sensor_to_sink_pipeline() {
+  g_redis_mock = {};
+
+  std::FILE* cpu_file = std::tmpfile();
+  std::FILE* psi_cpu_file = std::tmpfile();
+  std::FILE* psi_mem_file = std::tmpfile();
+  std::FILE* psi_io_file = std::tmpfile();
+  std::FILE* meminfo_file = std::tmpfile();
+  std::FILE* vmstat_file = std::tmpfile();
+  std::FILE* interrupts_file = std::tmpfile();
+  std::FILE* softirqs_file = std::tmpfile();
+  std::FILE* core_throttle_file = std::tmpfile();
+  std::FILE* package_throttle_file = std::tmpfile();
+
+  if (!write_temp_file(cpu_file,
+                       "cpu  100 0 100 800 0 0 0 0 0 0\n") ||
+      !write_temp_file(psi_cpu_file, "some avg10=9.00 avg60=0.00 avg300=0.00 total=1\n") ||
+      !write_temp_file(psi_mem_file, "some avg10=16.00 avg60=0.00 avg300=0.00 total=1\n") ||
+      !write_temp_file(psi_io_file, "some avg10=17.00 avg60=0.00 avg300=0.00 total=1\n") ||
+      !write_temp_file(meminfo_file,
+                       "MemTotal: 1000 kB\nMemAvailable: 500 kB\nDirty: 250000 kB\nWriteback: 150000 kB\n") ||
+      !write_temp_file(vmstat_file, "pgscan_kswapd 100\npgscan_direct 50\npgsteal_kswapd 80\npgsteal_direct 30\n") ||
+      !write_temp_file(interrupts_file, "           CPU0\n 0: 100 IO-APIC-edge timer\n") ||
+      !write_temp_file(softirqs_file,
+                       "                    CPU0\nHI: 0\nTIMER: 100\nNET_TX: 100\nNET_RX: 100\n") ||
+      !write_temp_file(core_throttle_file, "10\n") || !write_temp_file(package_throttle_file, "10\n")) {
+    return fail("test_end_to_end_sensor_to_sink_pipeline", "failed writing synthetic sensor fixtures");
+  }
+
+  CpuSensor cpu_sensor(cpu_file, true);
+  PsiSensor psi_sensor({{{"cpu", psi_cpu_file}, {"memory", psi_mem_file}, {"io", psi_io_file}}}, true);
+  MemorySensor memory_sensor(meminfo_file, vmstat_file, true);
+  InterruptsSensor interrupts_sensor(interrupts_file, true);
+  SoftirqsSensor softirqs_sensor(softirqs_file, true);
+  std::vector<PowerSensor::ThermalThrottleSource> cores{};
+  cores.push_back(PowerSensor::ThermalThrottleSource{core_throttle_file, package_throttle_file, 0, 0, false});
+  PowerSensor power_sensor(std::move(cores), true);
+
+  SchedulerPressure scheduler_pressure;
+  MemoryPressure memory_pressure;
+  IoPressure io_pressure;
+  ThermalPressure thermal_pressure;
+  PowerPressure power_pressure;
+  LatencyJitter latency_jitter;
+  RealtimeRisk realtime_risk;
+  SaturationRisk saturation_risk;
+  SystemState system_state;
+
+  RedisTsOptions options;
+  options.publish_health = false;
+  options.key_prefix = "edge:test";
+  RedisTsSink sink(options);
+
+  signal_frame frame{};
+
+  cpu_sensor.sample(frame);
+  psi_sensor.sample(frame);
+  memory_sensor.sample(frame);
+  interrupts_sensor.sample(frame);
+  softirqs_sensor.sample(frame);
+  power_sensor.sample(frame);
+
+  if (!write_temp_file(cpu_file,
+                       "cpu  200 0 200 900 0 0 0 0 0 0\n") ||
+      !write_temp_file(interrupts_file, "           CPU0\n 0: 300 IO-APIC-edge timer\n") ||
+      !write_temp_file(softirqs_file,
+                       "                    CPU0\nHI: 0\nTIMER: 250\nNET_TX: 250\nNET_RX: 250\n") ||
+      !write_temp_file(core_throttle_file, "11\n") || !write_temp_file(package_throttle_file, "11\n")) {
+    return fail("test_end_to_end_sensor_to_sink_pipeline", "failed updating synthetic sensor fixtures");
+  }
+
+  for (int tick = 0; tick < 3; ++tick) {
+    frame.monotonic_ns = 1'000'000'000ULL * static_cast<std::uint64_t>(tick + 1);
+    cpu_sensor.sample(frame);
+    psi_sensor.sample(frame);
+    memory_sensor.sample(frame);
+    interrupts_sensor.sample(frame);
+    softirqs_sensor.sample(frame);
+    power_sensor.sample(frame);
+
+    frame.disk = 80.0F;
+    frame.network = 0.90F;
+    frame.thermal = 5.0F;
+
+    scheduler_pressure.sample(frame);
+    memory_pressure.sample(frame);
+    io_pressure.sample(frame);
+    thermal_pressure.sample(frame);
+    power_pressure.sample(frame);
+    latency_jitter.sample(frame);
+    realtime_risk.sample(frame);
+    saturation_risk.sample(frame);
+    system_state.sample(frame);
+  }
+
+  if (frame.state < system_state::UNSTABLE) {
+    return fail("test_end_to_end_sensor_to_sink_pipeline", "expected state machine to leave stable/degraded states");
+  }
+
+  if (!sink.publish(frame)) {
+    return fail("test_end_to_end_sensor_to_sink_pipeline", "pipeline frame should publish to sink");
+  }
+
+  bool found_realtime = false;
+  bool found_saturation = false;
+  bool found_state = false;
+  for (std::size_t i = 0; i + 2 < g_redis_mock.last_argv.size(); ++i) {
+    if (g_redis_mock.last_argv[i] == "edge:test:risk:realtime_risk") {
+      found_realtime = true;
+    }
+    if (g_redis_mock.last_argv[i] == "edge:test:risk:saturation_risk") {
+      found_saturation = true;
+    }
+    if (g_redis_mock.last_argv[i] == "edge:test:risk:state") {
+      found_state = g_redis_mock.last_argv[i + 2] == "2.000000" || g_redis_mock.last_argv[i + 2] == "3.000000";
+    }
+  }
+
+  if (!found_realtime || !found_saturation || !found_state) {
+    return fail("test_end_to_end_sensor_to_sink_pipeline", "sink payload missing integrated risk/state signals");
+  }
+
+  return 0;
+}
+
 }  // namespace
 
 int main() {
@@ -555,6 +701,7 @@ int main() {
   if (int rc = test_redis_sink_publish_logic(); rc != 0) return rc;
   if (int rc = test_redis_health_metrics_include_error_counter(); rc != 0) return rc;
   if (int rc = test_gpu_memory_and_emc_metrics_are_distinct(); rc != 0) return rc;
+  if (int rc = test_end_to_end_sensor_to_sink_pipeline(); rc != 0) return rc;
 
   std::cout << "[PASS] agent unit tests\n";
   return 0;

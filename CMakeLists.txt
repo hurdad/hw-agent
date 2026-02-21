@@ -97,9 +97,19 @@ add_executable(hw_agent_agent_unit_tests
   src/core/config.cpp
   src/core/sampler.cpp
   src/derived/memory_pressure.cpp
+  src/derived/scheduler_pressure.cpp
+  src/derived/io_pressure.cpp
+  src/derived/power_pressure.cpp
+  src/derived/latency_jitter.cpp
   src/derived/thermal_pressure.cpp
+  src/risk/realtime_risk.cpp
+  src/risk/saturation_risk.cpp
+  src/risk/system_state.cpp
+  src/sensors/cpu.cpp
   src/sensors/memory.cpp
   src/sensors/interrupts.cpp
+  src/sensors/power.cpp
+  src/sensors/psi.cpp
   src/sensors/softirqs.cpp
   src/sensors/thermal.cpp
   src/sinks/redis_ts.cpp
