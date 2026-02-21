@@ -1,0 +1,8 @@
+# Stats
+instantaneous_ops_per_sec:112
+keyspace_hits:900
+keyspace_misses:100
+# Clients
+connected_clients:31
+# Memory
+used_memory:2097152
