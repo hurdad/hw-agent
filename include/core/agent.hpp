@@ -6,10 +6,11 @@
 #include "core/sampler.hpp"
 #include "model/signal_frame.hpp"
 #include "sensors/cpu.hpp"
-#include "sensors/cpufreq.hpp"
 #include "sensors/interrupts.hpp"
+#include "sensors/power.hpp"
 #include "sensors/psi.hpp"
 #include "sensors/softirqs.hpp"
+#include "sensors/thermal.hpp"
 #include "sinks/stdout_debug.hpp"
 
 namespace hw_agent::core {
@@ -41,7 +42,8 @@ class Agent {
   sensors::CpuSensor cpu_sensor_{};
   sensors::InterruptsSensor interrupts_sensor_{};
   sensors::SoftirqsSensor softirqs_sensor_{};
-  sensors::CpuFreqSensor cpufreq_sensor_{};
+  sensors::ThermalSensor thermal_sensor_{};
+  sensors::PowerSensor power_sensor_{};
   sinks::StdoutDebugSink stdout_sink_{};
 };
 
