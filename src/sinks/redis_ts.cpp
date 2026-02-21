@@ -134,6 +134,7 @@ bool RedisTsSink::publish_impl(model::signal_frame& frame) {
       {"raw:network", sanitize_value(frame.network)},
       {"raw:gpu_util", sanitize_value(frame.gpu_util)},
       {"raw:gpu_mem_util", sanitize_value(frame.gpu_mem_util)},
+      {"raw:emc_util", sanitize_value(frame.emc_util)},
       {"raw:gpu_mem_free", sanitize_value(frame.gpu_mem_free)},
       {"raw:gpu_temp", sanitize_value(frame.gpu_temp)},
       {"raw:gpu_clock_ratio", sanitize_value(frame.gpu_clock_ratio)},

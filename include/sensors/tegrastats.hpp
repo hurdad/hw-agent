@@ -12,6 +12,7 @@ class TegraStatsSensor {
  public:
   struct RawFields {
     float gpu_util_pct{0.0F};
+    // EMC_FREQ percentage from tegrastats ([0,100]).
     float emc_util_pct{0.0F};
     float total_rail_power_mw{0.0F};
     std::unordered_map<std::string, float> rail_power_mw{};

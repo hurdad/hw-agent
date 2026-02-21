@@ -285,6 +285,40 @@ int test_interrupts_and_softirqs_delta_and_underflow_protection() {
   return 0;
 }
 
+
+int test_gpu_memory_and_emc_metrics_are_distinct() {
+  g_redis_mock = {};
+
+  RedisTsOptions options;
+  options.publish_health = false;
+  options.key_prefix = "edge:test";
+
+  RedisTsSink sink(options);
+  signal_frame frame{};
+  frame.gpu_mem_util = 41.0F;
+  frame.emc_util = 73.0F;
+
+  if (!sink.publish(frame)) {
+    return fail("test_gpu_memory_and_emc_metrics_are_distinct", "publish should succeed with mock redis");
+  }
+
+  bool found_gpu_mem_util = false;
+  bool found_emc_util = false;
+  for (std::size_t i = 0; i + 2 < g_redis_mock.last_argv.size(); ++i) {
+    if (g_redis_mock.last_argv[i] == "edge:test:raw:gpu_mem_util") {
+      found_gpu_mem_util = g_redis_mock.last_argv[i + 2].find("41") != std::string::npos;
+    }
+    if (g_redis_mock.last_argv[i] == "edge:test:raw:emc_util") {
+      found_emc_util = g_redis_mock.last_argv[i + 2].find("73") != std::string::npos;
+    }
+  }
+
+  if (!found_gpu_mem_util || !found_emc_util) {
+    return fail("test_gpu_memory_and_emc_metrics_are_distinct", "expected distinct gpu_mem_util and emc_util outputs");
+  }
+
+  return 0;
+}
 int test_redis_sink_publish_logic() {
   g_redis_mock = {};
 
@@ -326,6 +360,7 @@ int main() {
   if (int rc = test_config_parsing_edge_cases(); rc != 0) return rc;
   if (int rc = test_interrupts_and_softirqs_delta_and_underflow_protection(); rc != 0) return rc;
   if (int rc = test_redis_sink_publish_logic(); rc != 0) return rc;
+  if (int rc = test_gpu_memory_and_emc_metrics_are_distinct(); rc != 0) return rc;
 
   std::cout << "[PASS] agent unit tests\n";
   return 0;

@@ -12,6 +12,7 @@ class NoneGpuSensor final : public GpuSensor {
   bool collect(SignalFrame& frame) override {
     frame.gpu_util = 0.0F;
     frame.gpu_mem_util = 0.0F;
+    frame.emc_util = 0.0F;
     frame.gpu_mem_free = 0.0F;
     frame.gpu_temp = 0.0F;
     frame.gpu_clock_ratio = 0.0F;
