@@ -8,7 +8,7 @@ namespace hw_agent::derived {
 
 void MemoryPressure::sample(model::signal_frame& frame) noexcept {
   const float dirty_writeback_norm = 1.0F - std::exp(-frame.memory / 262144.0F);
-  const float psi_norm = core::clamp01(frame.psi / 20.0F);
+  const float psi_norm = core::clamp01(frame.psi_memory / 20.0F);
 
   const float raw_score = (0.70F * core::clamp01(dirty_writeback_norm)) + (0.30F * psi_norm);
 

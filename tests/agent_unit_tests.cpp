@@ -131,7 +131,7 @@ int test_memory_pressure_computation_and_ema() {
   signal_frame frame{};
 
   frame.memory = 262144.0F;
-  frame.psi = 10.0F;
+  frame.psi_memory = 10.0F;
   pressure.sample(frame);
 
   const float first = (0.70F * (1.0F - std::exp(-1.0F))) + (0.30F * 0.5F);
@@ -140,7 +140,7 @@ int test_memory_pressure_computation_and_ema() {
   }
 
   frame.memory = 0.0F;
-  frame.psi = 0.0F;
+  frame.psi_memory = 0.0F;
   pressure.sample(frame);
   const float second = 0.75F * first;
   if (!almost_equal(frame.memory_pressure, second)) {
