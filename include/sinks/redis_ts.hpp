@@ -30,6 +30,7 @@ class RedisTsSink {
   RedisTsSink(RedisTsSink&&) noexcept;
   RedisTsSink& operator=(RedisTsSink&&) noexcept;
 
+  bool check_connectivity();
   bool publish(model::signal_frame& frame);
 
  private:
