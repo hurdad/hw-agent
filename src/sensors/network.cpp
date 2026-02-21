@@ -1,6 +1,7 @@
 #include "sensors/network.hpp"
 
 #include <filesystem>
+#include <memory>
 
 namespace hw_agent::sensors {
 
@@ -26,13 +27,30 @@ NetworkSensor::NetworkSensor() {
 
       const std::string base = std::string{kSysClassNet} + "/" + iface + "/statistics/";
 
+      auto file_closer = [](std::FILE* file) {
+        if (file != nullptr) {
+          std::fclose(file);
+        }
+      };
+      using file_ptr = std::unique_ptr<std::FILE, decltype(file_closer)>;
+
+      file_ptr rx_packets_file(std::fopen((base + "rx_packets").c_str(), "r"), file_closer);
+      file_ptr tx_packets_file(std::fopen((base + "tx_packets").c_str(), "r"), file_closer);
+      file_ptr rx_dropped_file(std::fopen((base + "rx_dropped").c_str(), "r"), file_closer);
+      file_ptr tx_dropped_file(std::fopen((base + "tx_dropped").c_str(), "r"), file_closer);
+
       InterfaceSource source{};
-      source.rx_packets_file = std::fopen((base + "rx_packets").c_str(), "r");
-      source.tx_packets_file = std::fopen((base + "tx_packets").c_str(), "r");
-      source.rx_dropped_file = std::fopen((base + "rx_dropped").c_str(), "r");
-      source.tx_dropped_file = std::fopen((base + "tx_dropped").c_str(), "r");
+      source.rx_packets_file = rx_packets_file.get();
+      source.tx_packets_file = tx_packets_file.get();
+      source.rx_dropped_file = rx_dropped_file.get();
+      source.tx_dropped_file = tx_dropped_file.get();
 
       interfaces_.push_back(source);
+
+      rx_packets_file.release();
+      tx_packets_file.release();
+      rx_dropped_file.release();
+      tx_dropped_file.release();
     }
   } catch (const std::filesystem::filesystem_error&) {
     interfaces_.clear();

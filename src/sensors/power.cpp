@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <filesystem>
+#include <memory>
 
 namespace hw_agent::sensors {
 
@@ -34,15 +35,29 @@ PowerSensor::PowerSensor() {
 
       const std::string base_path = entry.path().string() + "/thermal_throttle";
 
+      auto file_closer = [](std::FILE* file) {
+        if (file != nullptr) {
+          std::fclose(file);
+        }
+      };
+      using file_ptr = std::unique_ptr<std::FILE, decltype(file_closer)>;
+
+      file_ptr core_throttle_count_file(
+          std::fopen((base_path + "/core_throttle_count").c_str(), "r"), file_closer);
+      file_ptr package_throttle_count_file(
+          std::fopen((base_path + "/package_throttle_count").c_str(), "r"), file_closer);
+
       ThermalThrottleSource source{};
-      source.core_throttle_count_file = std::fopen((base_path + "/core_throttle_count").c_str(), "r");
-      source.package_throttle_count_file = std::fopen((base_path + "/package_throttle_count").c_str(), "r");
+      source.core_throttle_count_file = core_throttle_count_file.get();
+      source.package_throttle_count_file = package_throttle_count_file.get();
 
       if (source.core_throttle_count_file == nullptr && source.package_throttle_count_file == nullptr) {
         continue;
       }
 
       cores_.push_back(source);
+      core_throttle_count_file.release();
+      package_throttle_count_file.release();
     }
   } catch (const std::filesystem::filesystem_error&) {
     cores_.clear();
