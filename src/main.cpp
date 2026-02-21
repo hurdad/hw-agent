@@ -1,5 +1,6 @@
 #include <csignal>
 #include <iostream>
+#include <sstream>
 #include <string>
 
 #include "core/agent.hpp"
@@ -15,6 +16,18 @@ void handle_shutdown_signal(int /*signal*/) {
 
 }  // namespace
 
+std::string format_config_settings(const hw_agent::core::AgentConfig& config, const std::string& config_path) {
+  std::ostringstream output;
+  output << "[agent] loaded config from " << config_path
+         << " | tick_interval_ms=" << config.tick_interval.count()
+         << " | thermal_throttle_temp_c=" << config.thermal_throttle_temp_c
+         << " | publish_health=" << (config.publish_health ? "true" : "false")
+         << " | stdout_debug=" << (config.stdout_debug ? "true" : "false")
+         << " | redis_enabled=" << (config.redis.enabled ? "true" : "false")
+         << " | redis_address=" << config.redis.host << ':' << config.redis.port;
+  return output.str();
+}
+
 int main(int argc, char** argv) {
   std::signal(SIGINT, handle_shutdown_signal);
   std::signal(SIGTERM, handle_shutdown_signal);
@@ -28,6 +41,8 @@ int main(int argc, char** argv) {
     std::cerr << "config error: " << ex.what() << '\n';
     return 1;
   }
+
+  std::cerr << format_config_settings(config, config_path) << '\n';
 
   hw_agent::core::Agent agent{config};
   while (g_shutdown_requested == 0) {
