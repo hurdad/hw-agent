@@ -151,7 +151,7 @@ bool RedisTsSink::ensure_schema() {
       "raw:memory",
       "raw:thermal",
       "raw:cpufreq",
-      "raw:power",
+      "raw:cpu_throttle_ratio",
       "raw:disk",
       "raw:network",
       "raw:gpu_util",
@@ -247,7 +247,7 @@ bool RedisTsSink::publish_impl(model::signal_frame& frame) {
   append_metric("raw:memory", sanitize_value(frame.memory));
   append_metric("raw:thermal", sanitize_value(frame.thermal));
   append_metric("raw:cpufreq", sanitize_value(frame.cpufreq));
-  append_metric("raw:power", sanitize_value(frame.power));
+  append_metric("raw:cpu_throttle_ratio", sanitize_value(frame.cpu_throttle_ratio));
   append_metric("raw:disk", sanitize_value(frame.disk));
   append_metric("raw:network", sanitize_value(frame.network));
   append_metric("raw:gpu_util", sanitize_value(frame.gpu_util));

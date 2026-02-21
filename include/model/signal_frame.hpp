@@ -37,7 +37,8 @@ struct signal_frame {
     float memory;
     float thermal;
     float cpufreq;
-    float power;
+    // CPU thermal throttle activity ratio [0,1] from /sys/devices/system/cpu/cpu*/thermal_throttle.
+    float cpu_throttle_ratio;
     float disk;
     float network;
     float gpu_util;

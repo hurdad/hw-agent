@@ -82,7 +82,7 @@ raw:softirqs
 raw:memory
 raw:thermal
 raw:cpufreq
-raw:power
+raw:cpu_throttle_ratio
 raw:disk
 raw:network
 raw:gpu_util

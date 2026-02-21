@@ -11,7 +11,7 @@ namespace {
 constexpr const char* kCpuPath = "/sys/devices/system/cpu";
 }
 
-PowerSensor::PowerSensor() : owns_files_(true) {
+CpuThrottleSensor::CpuThrottleSensor() : owns_files_(true) {
   try {
     for (const auto& entry : std::filesystem::directory_iterator(kCpuPath)) {
       if (!entry.is_directory()) {
@@ -65,10 +65,10 @@ PowerSensor::PowerSensor() : owns_files_(true) {
   }
 }
 
-PowerSensor::PowerSensor(std::vector<ThermalThrottleSource> cores, const bool owns_files)
+CpuThrottleSensor::CpuThrottleSensor(std::vector<ThermalThrottleSource> cores, const bool owns_files)
     : cores_(std::move(cores)), owns_files_(owns_files) {}
 
-PowerSensor::~PowerSensor() {
+CpuThrottleSensor::~CpuThrottleSensor() {
   if (!owns_files_) {
     return;
   }
@@ -85,7 +85,7 @@ PowerSensor::~PowerSensor() {
   }
 }
 
-bool PowerSensor::sample(model::signal_frame& frame) noexcept {
+bool CpuThrottleSensor::sample(model::signal_frame& frame) noexcept {
   raw_ = {};
   raw_.total_cores = cores_.size();
 
@@ -113,16 +113,16 @@ bool PowerSensor::sample(model::signal_frame& frame) noexcept {
   }
 
   if (raw_.total_cores != 0) {
-    raw_.throttle_ratio = static_cast<float>(raw_.throttled_cores) / static_cast<float>(raw_.total_cores);
+    raw_.cpu_throttle_ratio = static_cast<float>(raw_.throttled_cores) / static_cast<float>(raw_.total_cores);
   }
 
-  frame.power = raw_.throttle_ratio;
+  frame.cpu_throttle_ratio = raw_.cpu_throttle_ratio;
   return all_reads_ok;
 }
 
-const PowerSensor::RawFields& PowerSensor::raw() const noexcept { return raw_; }
+const CpuThrottleSensor::RawFields& CpuThrottleSensor::raw() const noexcept { return raw_; }
 
-bool PowerSensor::read_u64_file(std::FILE* file, std::uint64_t& value) noexcept {
+bool CpuThrottleSensor::read_u64_file(std::FILE* file, std::uint64_t& value) noexcept {
   if (file == nullptr) {
     value = 0;
     return false;

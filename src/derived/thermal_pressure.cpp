@@ -7,10 +7,10 @@ ThermalPressure::ThermalPressure(const float warning_window_c) noexcept : warnin
 
 void ThermalPressure::sample(model::signal_frame& frame) noexcept {
   const float headroom_pressure = core::clamp01((warning_window_c_ - frame.thermal) / warning_window_c_);
-  const float power_norm = core::clamp01(frame.power);
+  const float throttle_norm = core::clamp01(frame.cpu_throttle_ratio);
   const float cpu_norm = core::clamp01(frame.cpu / 100.0F);
 
-  const float raw_score = (0.70F * headroom_pressure) + (0.20F * power_norm) + (0.10F * cpu_norm);
+  const float raw_score = (0.70F * headroom_pressure) + (0.20F * throttle_norm) + (0.10F * cpu_norm);
 
   if (!has_ema_) {
     ema_ = raw_score;

@@ -59,7 +59,7 @@
         { "query": "TS.RANGE ${key_prefix}:raw:memory $__from $__to", "refId": "E" },
         { "query": "TS.RANGE ${key_prefix}:raw:thermal $__from $__to", "refId": "F" },
         { "query": "TS.RANGE ${key_prefix}:raw:cpufreq $__from $__to", "refId": "G" },
-        { "query": "TS.RANGE ${key_prefix}:raw:power $__from $__to", "refId": "H" },
+        { "query": "TS.RANGE ${key_prefix}:raw:cpu_throttle_ratio $__from $__to", "refId": "H" },
         { "query": "TS.RANGE ${key_prefix}:raw:disk $__from $__to", "refId": "I" },
         { "query": "TS.RANGE ${key_prefix}:raw:network $__from $__to", "refId": "J" }
       ],

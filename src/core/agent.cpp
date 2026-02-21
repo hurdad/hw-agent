@@ -94,7 +94,7 @@ void Agent::register_sensors(const AgentConfig& config) {
   sensor_registry_.push_back({"network", 7, sensor_enabled(config, "network"), [this](model::signal_frame& frame) { return network_sensor_.sample(frame); }});
   sensor_registry_.push_back({"tegrastats", 8, sensor_enabled(config, "tegrastats"), [this](model::signal_frame& frame) { return tegrastats_sensor_.sample(frame); }});
   sensor_registry_.push_back({"thermal", 9, sensor_enabled(config, "thermal"), [this](model::signal_frame& frame) { return thermal_sensor_.sample(frame); }});
-  sensor_registry_.push_back({"power", 10, sensor_enabled(config, "power"), [this](model::signal_frame& frame) { return power_sensor_.sample(frame); }});
+  sensor_registry_.push_back({"cpu_throttle", 10, sensor_enabled(config, "cpu_throttle"), [this](model::signal_frame& frame) { return cpu_throttle_sensor_.sample(frame); }});
   sensor_registry_.push_back({"cpufreq", 11, sensor_enabled(config, "cpufreq"), [this](model::signal_frame& frame) { return cpufreq_sensor_.sample(frame); }});
   sensor_registry_.push_back({"gpu", 12, sensor_enabled(config, "gpu"), [this](model::signal_frame& frame) {
     return gpu_sensor_ != nullptr ? gpu_sensor_->collect(frame) : false;

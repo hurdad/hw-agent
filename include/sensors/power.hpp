@@ -8,12 +8,12 @@
 
 namespace hw_agent::sensors {
 
-class PowerSensor {
+class CpuThrottleSensor {
  public:
   struct RawFields {
     std::uint64_t throttled_cores{0};
     std::uint64_t total_cores{0};
-    float throttle_ratio{0.0F};
+    float cpu_throttle_ratio{0.0F};
   };
 
   struct ThermalThrottleSource {
@@ -26,14 +26,14 @@ class PowerSensor {
     bool has_prev_counts{false};
   };
 
-  PowerSensor();
-  explicit PowerSensor(std::vector<ThermalThrottleSource> cores, bool owns_files = false);
-  ~PowerSensor();
+  CpuThrottleSensor();
+  explicit CpuThrottleSensor(std::vector<ThermalThrottleSource> cores, bool owns_files = false);
+  ~CpuThrottleSensor();
 
-  PowerSensor(const PowerSensor&) = delete;
-  PowerSensor& operator=(const PowerSensor&) = delete;
-  PowerSensor(PowerSensor&&) = delete;
-  PowerSensor& operator=(PowerSensor&&) = delete;
+  CpuThrottleSensor(const CpuThrottleSensor&) = delete;
+  CpuThrottleSensor& operator=(const CpuThrottleSensor&) = delete;
+  CpuThrottleSensor(CpuThrottleSensor&&) = delete;
+  CpuThrottleSensor& operator=(CpuThrottleSensor&&) = delete;
 
   bool sample(model::signal_frame& frame) noexcept;
   const RawFields& raw() const noexcept;

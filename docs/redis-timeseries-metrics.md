@@ -31,7 +31,7 @@ All keys use the configured prefix (default `hw-agent`) and are written as:
 | `raw:memory` | every tick | every 5 ticks (`500 ms`) | Dirty + writeback pressure. |
 | `raw:thermal` | every tick | every 9 ticks (`900 ms`) and every 11 ticks (`1100 ms`) | Thermal headroom (`ThermalSensor`) can be overwritten by `CpuFreqSensor` at its cadence. |
 | `raw:cpufreq` | every tick | every 11 ticks (`1100 ms`) | CPU frequency pressure ratio. |
-| `raw:power` | every tick | every 10 ticks (`1000 ms`) | CPU policy throttle ratio. |
+| `raw:cpu_throttle_ratio` | every tick | every 10 ticks (`1000 ms`) | CPU thermal throttle ratio [0,1]. |
 | `raw:disk` | every tick | every 6 ticks (`600 ms`) | `/proc/diskstats` weighted I/O wait estimate. |
 | `raw:network` | every tick | every 7 ticks (`700 ms`) | Interface packet drop ratio. |
 | `raw:gpu_util` | every tick | every 8 ticks (`800 ms`) and every 12 ticks (`1200 ms`) | Updated by both `TegraStatsSensor` and NVML GPU sensor (when available). |
