@@ -98,7 +98,7 @@ Requirements:
 * Docker
 * Docker Compose
 
-Run (default, no GPU requirements):
+Run (default profile: `configs/agent.yaml`):
 
 ```bash
 cd docker
@@ -107,11 +107,18 @@ docker compose up --build
 
 `hw_agent` is configured with `pid: host` in Compose so `/proc/*` sensors read host-kernel process/scheduler state instead of an isolated container PID namespace.
 
-Run with GPU support (NVIDIA):
+Select a different config profile (for example, CPU-only):
 
 ```bash
 cd docker
-docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
+AGENT_CONFIG=agent.cpu-only.yaml docker compose up --build
+```
+
+Run with GPU support (NVIDIA) and the discrete-GPU profile:
+
+```bash
+cd docker
+AGENT_CONFIG=agent.cpu-discrete-gpu.yaml docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
 ```
 
 Open Grafana:
@@ -168,27 +175,26 @@ Run:
 
 ## Configuration
 
-`configs/agent.yaml`
+The agent ships with four config profiles under `configs/`:
 
-Additional preset profiles are available:
+| File | Intended host | Enabled sensors |
+| --- | --- | --- |
+| `agent.yaml` | Generic Linux host with full sensor set and GPU support when available | `psi`, `cpu`, `interrupts`, `softirqs`, `memory`, `disk`, `network`, `tegrastats`, `thermal`, `power`, `cpufreq`, `gpu` |
+| `agent.cpu-only.yaml` | CPU-only hosts (no GPU metrics) | `psi`, `cpu`, `interrupts`, `softirqs`, `memory`, `disk`, `network`, `thermal`, `power`, `cpufreq` |
+| `agent.cpu-discrete-gpu.yaml` | x86/ARM hosts with discrete GPU via NVML | `psi`, `cpu`, `interrupts`, `softirqs`, `memory`, `disk`, `network`, `thermal`, `power`, `cpufreq`, `gpu` |
+| `agent.cpu-tegrastats-jetson.yaml` | NVIDIA Jetson hosts using tegrastats integration | `psi`, `cpu`, `interrupts`, `softirqs`, `memory`, `disk`, `network`, `tegrastats`, `thermal`, `power`, `cpufreq` |
 
-- `configs/agent.cpu-only.yaml`
-- `configs/agent.cpu-discrete-gpu.yaml`
-- `configs/agent.cpu-tegrastats-jetson.yaml`
+In Docker Compose, pick the profile with `AGENT_CONFIG`:
 
-```yaml
-tick_ms: 100
+```bash
+cd docker
+AGENT_CONFIG=agent.cpu-tegrastats-jetson.yaml docker compose up --build
+```
 
-redis:
-  host: localhost
-  port: 6379
+To run without Docker, pass the config file path directly:
 
-thermal:
-  throttle_temp: 92
-
-agent:
-  publish_health: true
-  stdout_debug: false  # set false in production to disable stdout logs
+```bash
+./hw_agent configs/agent.yaml
 ```
 
 ---

@@ -9,15 +9,15 @@ redis:
   address: 127.0.0.1:6379
 
 sensors:
-  psi: false
+  psi: true
   cpu: true
-  interrupts: false
-  softirqs: false
-  memory: false
-  disk: false
-  network: false
+  interrupts: true
+  softirqs: true
+  memory: true
+  disk: true
+  network: true
   tegrastats: false
-  thermal: false
-  power: false
-  cpufreq: false
+  thermal: true
+  power: true
+  cpufreq: true
   gpu: false
