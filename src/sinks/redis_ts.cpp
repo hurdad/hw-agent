@@ -193,6 +193,7 @@ bool RedisTsSink::ensure_schema() {
     const bool unknown_command =
         reply->type == REDIS_REPLY_ERROR && reply->str != nullptr && strstr(reply->str, "unknown command") != nullptr;
     const bool ok = reply->type != REDIS_REPLY_ERROR || already_exists;
+    const std::string reply_message = reply->str != nullptr ? reply->str : "unknown";
     freeReplyObject(reply);
 
     if (unknown_command) {
@@ -201,7 +202,7 @@ bool RedisTsSink::ensure_schema() {
       return false;
     }
     if (!ok) {
-      std::cerr << "[redis] schema error on TS.CREATE " << key << ": " << (reply->str ? reply->str : "unknown") << '\n';
+      std::cerr << "[redis] schema error on TS.CREATE " << key << ": " << reply_message << '\n';
       return false;
     }
   }
