@@ -43,6 +43,7 @@ class RedisTsSink {
   bool reconnect();
   bool authenticate();
   bool select_db();
+  bool ensure_schema();
   bool publish_impl(model::signal_frame& frame);
   void reserve_command_buffers();
 
@@ -51,6 +52,8 @@ class RedisTsSink {
   std::vector<std::string> command_args_;
   std::vector<const char*> command_argv_;
   std::vector<std::size_t> command_argv_len_;
+  bool timeseries_available_{true};
+  bool schema_ready_{false};
 };
 
 }  // namespace hw_agent::sinks

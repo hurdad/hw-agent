@@ -3,8 +3,10 @@
 #include "core/timestamp.hpp"
 
 #include <chrono>
+#include <array>
 #include <cmath>
 #include <cstddef>
+#include <cstring>
 #include <string>
 #include <utility>
 #include <vector>
@@ -52,6 +54,10 @@ void RedisTsSink::ContextDeleter::operator()(redisContext* context) const {
 }
 
 bool RedisTsSink::ensure_connected() {
+  if (!timeseries_available_) {
+    return false;
+  }
+
   if (context_ != nullptr && context_->err == REDIS_OK) {
     return true;
   }
@@ -83,6 +89,11 @@ bool RedisTsSink::reconnect() {
     context_.reset();
     return false;
   }
+  if (!ensure_schema()) {
+    context_.reset();
+    return false;
+  }
+
   return true;
 }
 
@@ -112,6 +123,78 @@ bool RedisTsSink::select_db() {
   const bool ok = reply->type != REDIS_REPLY_ERROR;
   freeReplyObject(reply);
   return ok;
+}
+
+bool RedisTsSink::ensure_schema() {
+  if (schema_ready_) {
+    return true;
+  }
+
+  static constexpr std::array<const char*, kMetricCountBase + kMetricCountHealth> kMetricSuffixes = {
+      "raw:psi",
+      "raw:psi_memory",
+      "raw:psi_io",
+      "raw:cpu",
+      "raw:irq",
+      "raw:softirqs",
+      "raw:memory",
+      "raw:thermal",
+      "raw:cpufreq",
+      "raw:power",
+      "raw:disk",
+      "raw:network",
+      "raw:gpu_util",
+      "raw:gpu_mem_util",
+      "raw:emc_util",
+      "raw:gpu_mem_free",
+      "raw:gpu_temp",
+      "raw:gpu_clock_ratio",
+      "raw:gpu_power_ratio",
+      "raw:gpu_throttle",
+      "derived:scheduler_pressure",
+      "derived:memory_pressure",
+      "derived:io_pressure",
+      "derived:thermal_pressure",
+      "derived:power_pressure",
+      "derived:latency_jitter",
+      "risk:realtime_risk",
+      "risk:saturation_risk",
+      "risk:state",
+      "agent:heartbeat",
+      "agent:loop_jitter",
+      "agent:compute_time",
+      "agent:redis_latency",
+      "agent:redis_errors",
+      "agent:sensor_failures",
+      "agent:missed_cycles",
+  };
+
+  for (const char* suffix : kMetricSuffixes) {
+    const std::string key = options_.key_prefix + ":" + suffix;
+    redisReply* reply = static_cast<redisReply*>(
+        redisCommand(context_.get(), "TS.CREATE %s DUPLICATE_POLICY LAST", key.c_str()));
+    if (reply == nullptr) {
+      return false;
+    }
+
+    const bool already_exists =
+        reply->type == REDIS_REPLY_ERROR && reply->str != nullptr && strstr(reply->str, "already exists") != nullptr;
+    const bool unknown_command =
+        reply->type == REDIS_REPLY_ERROR && reply->str != nullptr && strstr(reply->str, "unknown command") != nullptr;
+    const bool ok = reply->type != REDIS_REPLY_ERROR || already_exists;
+    freeReplyObject(reply);
+
+    if (unknown_command) {
+      timeseries_available_ = false;
+      return false;
+    }
+    if (!ok) {
+      return false;
+    }
+  }
+
+  schema_ready_ = true;
+  return true;
 }
 
 bool RedisTsSink::publish(model::signal_frame& frame) {
