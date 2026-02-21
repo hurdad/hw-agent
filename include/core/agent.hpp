@@ -4,6 +4,9 @@
 #include <cstddef>
 
 #include "core/sampler.hpp"
+#include "model/signal_frame.hpp"
+#include "sensors/psi.hpp"
+#include "sinks/stdout_debug.hpp"
 
 namespace hw_agent::core {
 
@@ -29,6 +32,9 @@ class Agent {
 
   std::chrono::milliseconds tick_interval_;
   Sampler sampler_{};
+  model::signal_frame frame_{};
+  sensors::PsiSensor psi_sensor_{};
+  sinks::StdoutDebugSink stdout_sink_{};
 };
 
 }  // namespace hw_agent::core

@@ -2,6 +2,8 @@
 
 #include <thread>
 
+#include "core/timestamp.hpp"
+
 namespace hw_agent::core {
 
 Agent::Agent(const std::chrono::milliseconds tick_interval) : tick_interval_(tick_interval) {}
@@ -27,22 +29,23 @@ AgentStats Agent::run_for_ticks(const std::size_t total_ticks) {
 }
 
 void Agent::collect_sensors(AgentStats& stats) {
-  // Base sensors sample every tick.
   ++stats.sensor_cycles;
+  frame_.timestamp = timestamp_now_ns();
+  psi_sensor_.sample(frame_);
 
-  // Example multi-rate sensor hook (10 Hz when base tick is 100 ms).
   (void)sampler_.should_sample_every(1);
 }
 
 void Agent::compute_derived(AgentStats& stats) {
   ++stats.derived_cycles;
-
-  // Example derived metric that runs every 5 ticks.
   (void)sampler_.should_sample_every(5);
 }
 
 void Agent::compute_risk(AgentStats& stats) { ++stats.risk_cycles; }
 
-void Agent::publish_sinks(AgentStats& stats) { ++stats.sink_cycles; }
+void Agent::publish_sinks(AgentStats& stats) {
+  ++stats.sink_cycles;
+  stdout_sink_.publish(frame_);
+}
 
 }  // namespace hw_agent::core
