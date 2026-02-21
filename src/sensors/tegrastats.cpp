@@ -152,12 +152,13 @@ bool TegraStatsSensor::launch(const std::uint32_t interval_ms) noexcept {
   if (pid == 0) {
     close(pipe_fds[0]);
     dup2(pipe_fds[1], STDOUT_FILENO);
+    close(pipe_fds[1]);
+
     const int null_fd = open("/dev/null", O_WRONLY);
     if (null_fd >= 0) {
       dup2(null_fd, STDERR_FILENO);
       close(null_fd);
     }
-    close(pipe_fds[1]);
 
     const std::string interval = std::to_string(interval_ms);
     constexpr const char* kTegrastatsPath = "/usr/bin/tegrastats";
