@@ -20,6 +20,7 @@ struct signal_frame {
         float loop_jitter_ms;
         float compute_time_ms;
         float redis_latency_ms;
+        std::uint32_t redis_errors;
         std::uint32_t sensor_failures;
         std::uint32_t missed_cycles;
     };

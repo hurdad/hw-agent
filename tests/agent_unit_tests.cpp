@@ -319,6 +319,37 @@ int test_gpu_memory_and_emc_metrics_are_distinct() {
 
   return 0;
 }
+
+int test_redis_health_metrics_include_error_counter() {
+  g_redis_mock = {};
+
+  RedisTsOptions options;
+  options.publish_health = true;
+  options.key_prefix = "edge:test";
+
+  RedisTsSink sink(options);
+  signal_frame frame{};
+  frame.agent.redis_errors = 3;
+
+  if (!sink.publish(frame)) {
+    return fail("test_redis_health_metrics_include_error_counter", "publish should succeed with mock redis");
+  }
+
+  bool found_redis_errors = false;
+  for (std::size_t i = 0; i + 2 < g_redis_mock.last_argv.size(); ++i) {
+    if (g_redis_mock.last_argv[i] == "edge:test:agent:redis_errors") {
+      found_redis_errors = g_redis_mock.last_argv[i + 2].find("3") != std::string::npos;
+      break;
+    }
+  }
+
+  if (!found_redis_errors) {
+    return fail("test_redis_health_metrics_include_error_counter", "expected agent:redis_errors metric in TS.MADD payload");
+  }
+
+  return 0;
+}
+
 int test_redis_sink_publish_logic() {
   g_redis_mock = {};
 
@@ -360,6 +391,7 @@ int main() {
   if (int rc = test_config_parsing_edge_cases(); rc != 0) return rc;
   if (int rc = test_interrupts_and_softirqs_delta_and_underflow_protection(); rc != 0) return rc;
   if (int rc = test_redis_sink_publish_logic(); rc != 0) return rc;
+  if (int rc = test_redis_health_metrics_include_error_counter(); rc != 0) return rc;
   if (int rc = test_gpu_memory_and_emc_metrics_are_distinct(); rc != 0) return rc;
 
   std::cout << "[PASS] agent unit tests\n";
