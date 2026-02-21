@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <memory>
 
 namespace hw_agent::sensors {
 
@@ -40,9 +41,19 @@ ThermalSensor::ThermalSensor(const float throttle_temp_c) {
       ZoneSource source{};
       source.name = zone_name;
       source.temp_path = (zone_path / "temp").string();
-      source.file = std::fopen(source.temp_path.c_str(), "r");
+
+      auto file_closer = [](std::FILE* file) {
+        if (file != nullptr) {
+          std::fclose(file);
+        }
+      };
+      using file_ptr = std::unique_ptr<std::FILE, decltype(file_closer)>;
+
+      file_ptr file(std::fopen(source.temp_path.c_str(), "r"), file_closer);
+      source.file = file.get();
 
       zones_.push_back(source);
+      file.release();
     }
   } catch (const std::filesystem::filesystem_error&) {
     zones_.clear();
