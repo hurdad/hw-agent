@@ -1,8 +1,34 @@
 #include "sensors/disk.hpp"
 
+#include <cctype>
 #include <cstring>
 
 namespace hw_agent::sensors {
+
+namespace {
+
+bool is_partition_device(const char* name) noexcept {
+  const std::size_t len = std::strlen(name);
+  std::size_t digit_start = len;
+
+  while (digit_start > 0 && std::isdigit(static_cast<unsigned char>(name[digit_start - 1])) != 0) {
+    --digit_start;
+  }
+
+  if (digit_start == len || digit_start == 0) {
+    return false;
+  }
+
+  const char marker = name[digit_start - 1];
+  if (marker == 'p' && digit_start > 1 &&
+      std::isdigit(static_cast<unsigned char>(name[digit_start - 2])) != 0) {
+    return true;
+  }
+
+  return std::isalpha(static_cast<unsigned char>(marker)) != 0;
+}
+
+}  // namespace
 
 DiskSensor::DiskSensor() : diskstats_(std::fopen("/proc/diskstats", "r")) {}
 
@@ -66,6 +92,10 @@ void DiskSensor::sample(model::signal_frame& frame) noexcept {
     }
 
     if (std::strncmp(name, "loop", 4) == 0 || std::strncmp(name, "ram", 3) == 0) {
+      continue;
+    }
+
+    if (is_partition_device(name)) {
       continue;
     }
 
