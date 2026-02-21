@@ -32,6 +32,10 @@ void Agent::collect_sensors(AgentStats& stats) {
   ++stats.sensor_cycles;
   frame_.timestamp = timestamp_now_ns();
   psi_sensor_.sample(frame_);
+  cpu_sensor_.sample(frame_);
+  interrupts_sensor_.sample(frame_);
+  softirqs_sensor_.sample(frame_);
+  cpufreq_sensor_.sample(frame_);
 
   (void)sampler_.should_sample_every(1);
 }
