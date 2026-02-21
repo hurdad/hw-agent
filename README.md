@@ -12,5 +12,13 @@ cmake --build build
 ## Run
 
 ```bash
-./build/hw_agent
+./build/hw_agent configs/agent.yaml
 ```
+
+## Configuration
+
+`configs/agent.yaml` controls:
+- `tick_rate_hz`
+- `sensors.<name>` enable/disable flags
+- `redis.address` (`host:port`)
+- `thermal_throttle_temp_c`

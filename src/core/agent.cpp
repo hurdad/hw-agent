@@ -6,7 +6,17 @@
 
 namespace hw_agent::core {
 
-Agent::Agent(const std::chrono::milliseconds tick_interval) : tick_interval_(tick_interval) {}
+Agent::Agent(AgentConfig config)
+    : tick_interval_(config.tick_interval), thermal_sensor_(config.thermal_throttle_temp_c) {
+  if (config.redis.enabled) {
+    sinks::RedisTsOptions options{};
+    options.host = config.redis.host;
+    options.port = config.redis.port;
+    redis_sink_ = std::make_unique<sinks::RedisTsSink>(options);
+  }
+
+  register_sensors(config);
+}
 
 AgentStats Agent::run_for_ticks(const std::size_t total_ticks) {
   AgentStats stats{};
@@ -28,21 +38,41 @@ AgentStats Agent::run_for_ticks(const std::size_t total_ticks) {
   return stats;
 }
 
+void Agent::register_sensors(const AgentConfig& config) {
+  sensor_registry_.push_back({"psi", 1, sensor_enabled(config, "psi"), [this](model::signal_frame& frame) { psi_sensor_.sample(frame); }});
+  sensor_registry_.push_back({"cpu", 2, sensor_enabled(config, "cpu"), [this](model::signal_frame& frame) { cpu_sensor_.sample(frame); }});
+  sensor_registry_.push_back({"interrupts", 3, sensor_enabled(config, "interrupts"), [this](model::signal_frame& frame) { interrupts_sensor_.sample(frame); }});
+  sensor_registry_.push_back({"softirqs", 4, sensor_enabled(config, "softirqs"), [this](model::signal_frame& frame) { softirqs_sensor_.sample(frame); }});
+  sensor_registry_.push_back({"memory", 5, sensor_enabled(config, "memory"), [this](model::signal_frame& frame) { memory_sensor_.sample(frame); }});
+  sensor_registry_.push_back({"disk", 6, sensor_enabled(config, "disk"), [this](model::signal_frame& frame) { disk_sensor_.sample(frame); }});
+  sensor_registry_.push_back({"network", 7, sensor_enabled(config, "network"), [this](model::signal_frame& frame) { network_sensor_.sample(frame); }});
+  sensor_registry_.push_back({"tegrastats", 8, sensor_enabled(config, "tegrastats"), [this](model::signal_frame& frame) { tegrastats_sensor_.sample(frame); }});
+  sensor_registry_.push_back({"thermal", 9, sensor_enabled(config, "thermal"), [this](model::signal_frame& frame) { thermal_sensor_.sample(frame); }});
+  sensor_registry_.push_back({"power", 10, sensor_enabled(config, "power"), [this](model::signal_frame& frame) { power_sensor_.sample(frame); }});
+  sensor_registry_.push_back({"cpufreq", 11, sensor_enabled(config, "cpufreq"), [this](model::signal_frame& frame) { cpufreq_sensor_.sample(frame); }});
+}
+
+bool Agent::sensor_enabled(const AgentConfig& config, const std::string& name) const {
+  const auto it = config.sensor_enabled.find(name);
+  if (it == config.sensor_enabled.end()) {
+    return true;
+  }
+  return it->second;
+}
+
 void Agent::collect_sensors(AgentStats& stats) {
   ++stats.sensor_cycles;
   frame_.timestamp = timestamp_now_ns();
-  psi_sensor_.sample(frame_);
-  cpu_sensor_.sample(frame_);
-  interrupts_sensor_.sample(frame_);
-  softirqs_sensor_.sample(frame_);
-  memory_sensor_.sample(frame_);
-  disk_sensor_.sample(frame_);
-  network_sensor_.sample(frame_);
-  tegrastats_sensor_.sample(frame_);
-  thermal_sensor_.sample(frame_);
-  power_sensor_.sample(frame_);
 
-  (void)sampler_.should_sample_every(1);
+  for (auto& sensor : sensor_registry_) {
+    if (!sensor.enabled) {
+      continue;
+    }
+
+    if (sampler_.should_sample_every(sensor.every_ticks)) {
+      sensor.sample(frame_);
+    }
+  }
 }
 
 void Agent::compute_derived(AgentStats& stats) {
@@ -53,7 +83,6 @@ void Agent::compute_derived(AgentStats& stats) {
   thermal_pressure_.sample(frame_);
   power_pressure_.sample(frame_);
   latency_jitter_.sample(frame_);
-  (void)sampler_.should_sample_every(5);
 }
 
 void Agent::compute_risk(AgentStats& stats) {
@@ -66,6 +95,9 @@ void Agent::compute_risk(AgentStats& stats) {
 void Agent::publish_sinks(AgentStats& stats) {
   ++stats.sink_cycles;
   stdout_sink_.publish(frame_);
+  if (redis_sink_ != nullptr) {
+    redis_sink_->publish(frame_);
+  }
 }
 
 }  // namespace hw_agent::core
