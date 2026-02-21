@@ -19,13 +19,21 @@ bool is_partition_device(const char* name) noexcept {
     return false;
   }
 
+  bool has_embedded_digit = false;
+  for (std::size_t idx = 0; idx < digit_start; ++idx) {
+    if (std::isdigit(static_cast<unsigned char>(name[idx])) != 0) {
+      has_embedded_digit = true;
+      break;
+    }
+  }
+
   const char marker = name[digit_start - 1];
   if (marker == 'p' && digit_start > 1 &&
       std::isdigit(static_cast<unsigned char>(name[digit_start - 2])) != 0) {
     return true;
   }
 
-  return std::isalpha(static_cast<unsigned char>(marker)) != 0;
+  return !has_embedded_digit && std::isalpha(static_cast<unsigned char>(marker)) != 0;
 }
 
 }  // namespace
