@@ -53,6 +53,14 @@ void apply_key_value(AgentConfig& config, const std::string& key, const std::str
     return;
   }
 
+  if (key == "thermal_pressure_warning_window_c") {
+    config.thermal_pressure_warning_window_c = std::stof(value);
+    if (config.thermal_pressure_warning_window_c <= 0.0F) {
+      throw std::runtime_error("thermal_pressure_warning_window_c must be greater than 0");
+    }
+    return;
+  }
+
   if (key == "agent.publish_health") {
     config.publish_health = parse_bool(value);
     return;

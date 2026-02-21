@@ -3,9 +3,10 @@
 
 namespace hw_agent::derived {
 
+ThermalPressure::ThermalPressure(const float warning_window_c) noexcept : warning_window_c_(warning_window_c > 0.0F ? warning_window_c : 30.0F) {}
 
 void ThermalPressure::sample(model::signal_frame& frame) noexcept {
-  const float headroom_pressure = core::clamp01((30.0F - frame.thermal) / 30.0F);
+  const float headroom_pressure = core::clamp01((warning_window_c_ - frame.thermal) / warning_window_c_);
   const float power_norm = core::clamp01(frame.power);
   const float cpu_norm = core::clamp01(frame.cpu / 100.0F);
 

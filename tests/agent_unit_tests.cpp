@@ -16,6 +16,7 @@
 #include "core/config.hpp"
 #include "core/sampler.hpp"
 #include "derived/memory_pressure.hpp"
+#include "derived/thermal_pressure.hpp"
 #include "model/signal_frame.hpp"
 #include "sensors/interrupts.hpp"
 #include "sensors/memory.hpp"
@@ -26,6 +27,7 @@
 using hw_agent::core::Sampler;
 using hw_agent::core::load_agent_config;
 using hw_agent::derived::MemoryPressure;
+using hw_agent::derived::ThermalPressure;
 using hw_agent::model::signal_frame;
 using hw_agent::sensors::InterruptsSensor;
 using hw_agent::sensors::MemorySensor;
@@ -158,6 +160,30 @@ int test_memory_pressure_computation_and_ema() {
   return 0;
 }
 
+
+int test_thermal_pressure_warning_window_configurable() {
+  ThermalPressure default_pressure;
+  ThermalPressure narrow_window(10.0F);
+  signal_frame default_frame{};
+  signal_frame narrow_frame{};
+
+  default_frame.thermal = 20.0F;
+  narrow_frame.thermal = 20.0F;
+
+  default_pressure.sample(default_frame);
+  narrow_window.sample(narrow_frame);
+
+  if (!almost_equal(default_frame.thermal_pressure, 0.23333333F, 1e-3F)) {
+    return fail("test_thermal_pressure_warning_window_configurable", "default warning window baseline mismatch");
+  }
+
+  if (!almost_equal(narrow_frame.thermal_pressure, 0.0F)) {
+    return fail("test_thermal_pressure_warning_window_configurable", "narrow warning window should clamp pressure at zero");
+  }
+
+  return 0;
+}
+
 int test_sampler_should_sample_every() {
   Sampler sampler;
 
@@ -263,6 +289,24 @@ int test_config_parsing_edge_cases() {
 
   if (!invalid_float_threw) {
     return fail("test_config_parsing_edge_cases", "invalid float should throw");
+  }
+
+  const auto bad_warning_window = std::filesystem::temp_directory_path() / "hw_agent_bad_warning_window.yaml";
+  {
+    std::ofstream out(bad_warning_window);
+    out << "thermal_pressure_warning_window_c: 0\n";
+  }
+
+  bool bad_warning_window_threw = false;
+  try {
+    (void)load_agent_config(bad_warning_window.string());
+  } catch (const std::exception&) {
+    bad_warning_window_threw = true;
+  }
+  std::filesystem::remove(bad_warning_window);
+
+  if (!bad_warning_window_threw) {
+    return fail("test_config_parsing_edge_cases", "thermal_pressure_warning_window_c <= 0 should throw");
   }
 
   const auto unix_socket = std::filesystem::temp_directory_path() / "hw_agent_unix_redis.yaml";
@@ -502,6 +546,7 @@ int test_redis_sink_publish_logic() {
 int main() {
   if (int rc = test_memory_sensor_parser(); rc != 0) return rc;
   if (int rc = test_memory_pressure_computation_and_ema(); rc != 0) return rc;
+  if (int rc = test_thermal_pressure_warning_window_configurable(); rc != 0) return rc;
   if (int rc = test_sampler_should_sample_every(); rc != 0) return rc;
   if (int rc = test_sensor_dispatches_once_per_tick(); rc != 0) return rc;
   if (int rc = test_config_parsing_edge_cases(); rc != 0) return rc;
