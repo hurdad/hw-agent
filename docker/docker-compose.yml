@@ -45,8 +45,22 @@ services:
       - /bin/sh
       - -c
       - |
-        cp "/app/configs/$${AGENT_CONFIG}" /tmp/agent.yaml
-        sed -i "s|^  address: .*|  address: $${REDIS_ADDRESS}|" /tmp/agent.yaml
+        set -eu
+        if printf '%s' "$${REDIS_ADDRESS}" | grep -q '[[:cntrl:]]'; then
+          echo "REDIS_ADDRESS must not contain control characters" >&2
+          exit 1
+        fi
+        awk -v redis_address="$${REDIS_ADDRESS}" '
+          $0 == "redis:" { in_redis = 1; print; next }
+          in_redis && $0 ~ /^  address: / { print "  address: " redis_address; in_redis = 0; replaced = 1; next }
+          { print }
+          END {
+            if (!replaced) {
+              print "redis.address was not found in agent config" > "/dev/stderr"
+              exit 1
+            }
+          }
+        ' "/app/configs/$${AGENT_CONFIG}" > /tmp/agent.yaml
         while true; do /usr/local/bin/hw_agent /tmp/agent.yaml; sleep 1; done
     depends_on:
       - redis
