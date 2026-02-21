@@ -53,11 +53,11 @@
       },
       "targets": [
         {
-          "query": "TS.RANGE edge:${node}:risk:realtime $from $to",
+          "query": "TS.RANGE edge:${node}:risk:realtime $__from $__to",
           "refId": "A"
         },
         {
-          "query": "TS.RANGE edge:${node}:risk:saturation $from $to",
+          "query": "TS.RANGE edge:${node}:risk:saturation $__from $__to",
           "refId": "B"
         }
       ],
@@ -95,19 +95,19 @@
       },
       "targets": [
         {
-          "query": "TS.RANGE edge:${node}:pressure:scheduler $from $to",
+          "query": "TS.RANGE edge:${node}:pressure:scheduler $__from $__to",
           "refId": "A"
         },
         {
-          "query": "TS.RANGE edge:${node}:pressure:memory $from $to",
+          "query": "TS.RANGE edge:${node}:pressure:memory $__from $__to",
           "refId": "B"
         },
         {
-          "query": "TS.RANGE edge:${node}:pressure:io $from $to",
+          "query": "TS.RANGE edge:${node}:pressure:io $__from $__to",
           "refId": "C"
         },
         {
-          "query": "TS.RANGE edge:${node}:pressure:thermal $from $to",
+          "query": "TS.RANGE edge:${node}:pressure:thermal $__from $__to",
           "refId": "D"
         }
       ],
@@ -145,15 +145,15 @@
       },
       "targets": [
         {
-          "query": "TS.RANGE edge:${node}:agent:loop_jitter $from $to",
+          "query": "TS.RANGE edge:${node}:agent:loop_jitter $__from $__to",
           "refId": "A"
         },
         {
-          "query": "TS.RANGE edge:${node}:agent:compute_time $from $to",
+          "query": "TS.RANGE edge:${node}:agent:compute_time $__from $__to",
           "refId": "B"
         },
         {
-          "query": "TS.RANGE edge:${node}:agent:redis_latency $from $to",
+          "query": "TS.RANGE edge:${node}:agent:redis_latency $__from $__to",
           "refId": "C"
         }
       ],
@@ -203,7 +203,7 @@
       },
       "targets": [
         {
-          "query": "TS.RANGE edge:${node}:agent:missed_cycles $from $to",
+          "query": "TS.RANGE edge:${node}:agent:missed_cycles $__from $__to",
           "refId": "A"
         }
       ],
@@ -253,7 +253,7 @@
       },
       "targets": [
         {
-          "query": "TS.RANGE edge:${node}:agent:sensor_failures $from $to",
+          "query": "TS.RANGE edge:${node}:agent:sensor_failures $__from $__to",
           "refId": "A"
         }
       ],
