@@ -33,6 +33,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    pid: host
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
