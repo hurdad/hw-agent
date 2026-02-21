@@ -48,8 +48,6 @@ TegraStatsSensor::TegraStatsSensor(const std::uint32_t interval_ms) noexcept {
 TegraStatsSensor::~TegraStatsSensor() { disable(); }
 
 void TegraStatsSensor::sample(model::signal_frame& frame) noexcept {
-  (void)frame;
-
   if (!enabled_) {
     return;
   }
@@ -95,6 +93,18 @@ void TegraStatsSensor::sample(model::signal_frame& frame) noexcept {
     if (wait_result == child_pid_) {
       disable();
     }
+  }
+
+  frame.gpu_util = raw_.gpu_util_pct;
+  frame.gpu_mem_util = raw_.emc_util_pct;
+
+  const auto gpu_temp_it = raw_.temperatures_c.find("GPU");
+  if (gpu_temp_it != raw_.temperatures_c.end()) {
+    frame.gpu_temp = gpu_temp_it->second;
+  }
+
+  if (raw_.total_rail_power_mw > 0.0F) {
+    frame.gpu_power_ratio = raw_.total_rail_power_mw;
   }
 }
 
