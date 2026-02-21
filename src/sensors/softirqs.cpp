@@ -1,7 +1,7 @@
 #include "sensors/softirqs.hpp"
 
-#include <cerrno>
-#include <cstdlib>
+#include <cstdint>
+#include <limits>
 
 namespace hw_agent::sensors {
 
@@ -28,44 +28,73 @@ bool SoftirqsSensor::sample(model::signal_frame& frame) noexcept {
   }
 
   char buffer[kReadBufferSize]{};
-  const std::size_t bytes_read = std::fread(buffer, 1, sizeof(buffer) - 1, file_);
-  if (bytes_read == 0U) {
-    frame.softirqs = 0.0F;
-    return false;
-  }
-  buffer[bytes_read] = '\0';
+  bool saw_any_data = false;
+  bool parse_values = false;
+  bool in_number = false;
+  std::uint64_t current_value = 0;
 
   std::uint64_t total_softirqs = 0;
-  const char* line_start = buffer;
-  while (*line_start != '\0') {
-    const char* line_end = line_start;
-    while (*line_end != '\0' && *line_end != '\n') {
-      ++line_end;
+
+  while (true) {
+    const std::size_t bytes_read = std::fread(buffer, 1, sizeof(buffer), file_);
+    if (bytes_read == 0U) {
+      break;
     }
 
-    const char* cursor = line_start;
-    while (cursor < line_end && *cursor != ':') {
-      ++cursor;
-    }
+    saw_any_data = true;
+    for (std::size_t i = 0; i < bytes_read; ++i) {
+      const char ch = buffer[i];
 
-    if (cursor < line_end && *cursor == ':') {
-      ++cursor;
-      while (cursor < line_end) {
-        if (*cursor >= '0' && *cursor <= '9') {
-          char* end = nullptr;
-          errno = 0;
-          const unsigned long long parsed = std::strtoull(cursor, &end, 10);
-          if (errno == 0 && end != cursor) {
-            total_softirqs += parsed;
-            cursor = end;
-            continue;
-          }
+      if (ch == '\n') {
+        if (in_number) {
+          total_softirqs += current_value;
+          in_number = false;
+          current_value = 0;
         }
-        ++cursor;
+        parse_values = false;
+        continue;
+      }
+
+      if (!parse_values) {
+        if (ch == ':') {
+          parse_values = true;
+        }
+        continue;
+      }
+
+      if (ch >= '0' && ch <= '9') {
+        const std::uint64_t digit = static_cast<std::uint64_t>(ch - '0');
+        if (in_number) {
+          constexpr std::uint64_t kMaxValue = std::numeric_limits<std::uint64_t>::max();
+          constexpr std::uint64_t kMaxBeforeMul10 = kMaxValue / 10;
+          constexpr std::uint64_t kMaxLastDigit = kMaxValue % 10;
+          if (current_value > kMaxBeforeMul10 || (current_value == kMaxBeforeMul10 && digit > kMaxLastDigit)) {
+            current_value = kMaxValue;
+          } else {
+            current_value = (current_value * 10) + digit;
+          }
+        } else {
+          in_number = true;
+          current_value = digit;
+        }
+        continue;
+      }
+
+      if (in_number) {
+        total_softirqs += current_value;
+        in_number = false;
+        current_value = 0;
       }
     }
+  }
 
-    line_start = (*line_end == '\n') ? line_end + 1 : line_end;
+  if (in_number) {
+    total_softirqs += current_value;
+  }
+
+  if (!saw_any_data) {
+    frame.softirqs = 0.0F;
+    return false;
   }
 
   if (!has_prev_) {
