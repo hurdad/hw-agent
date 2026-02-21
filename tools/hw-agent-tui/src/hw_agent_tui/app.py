@@ -6,8 +6,7 @@ from textual.containers import Container
 from textual.widgets import Footer, Header, Static
 
 from hw_agent_tui.redis.client import make_client
-from hw_agent_tui.redis.collectors import collect_info
-from hw_agent_tui.runtime.controller import to_dashboard_state
+from hw_agent_tui.redis.collectors import collect_hw_metrics, group_hw_metrics
 from hw_agent_tui.ui.screens.dashboard import format_dashboard
 
 
@@ -28,13 +27,13 @@ class DashboardApp(App[None]):
         await self.refresh_data()
 
     async def refresh_data(self) -> None:
-        info = await asyncio.to_thread(self._collect)
-        state = to_dashboard_state(info)
-        self.query_one("#dashboard", Static).update(format_dashboard(state))
+        grouped_metrics = await asyncio.to_thread(self._collect)
+        self.query_one("#dashboard", Static).update(format_dashboard(grouped_metrics))
 
-    def _collect(self) -> dict[str, int | float]:
+    def _collect(self) -> dict[str, dict[str, float]]:
         client = make_client()
-        return collect_info(client)
+        metrics = collect_hw_metrics(client)
+        return group_hw_metrics(metrics)
 
 
 def run() -> None:
