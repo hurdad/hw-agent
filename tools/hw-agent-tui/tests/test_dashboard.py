@@ -11,3 +11,11 @@ def test_format_dashboard_sections() -> None:
     assert "[AGENT]" in output
     assert "cpu" in output
     assert "missed_cycles" in output
+    assert "ratio" in output
+    assert "count" in output
+
+
+def test_format_dashboard_unknown_metric_uses_unitless_marker() -> None:
+    output = format_dashboard({"other": {"mystery_metric": 1.0}})
+    assert "mystery_metric" in output
+    assert "-" in output
