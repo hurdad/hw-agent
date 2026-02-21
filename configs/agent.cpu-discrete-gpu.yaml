@@ -1,0 +1,23 @@
+tick_rate_hz: 10
+thermal_throttle_temp_c: 84.0
+
+agent:
+  publish_health: true
+  stdout_debug: true
+
+redis:
+  address: 127.0.0.1:6379
+
+sensors:
+  psi: true
+  cpu: true
+  interrupts: true
+  softirqs: true
+  memory: true
+  disk: true
+  network: true
+  tegrastats: false
+  thermal: true
+  power: true
+  cpufreq: true
+  gpu: true
