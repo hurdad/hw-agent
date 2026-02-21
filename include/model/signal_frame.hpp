@@ -30,6 +30,7 @@ struct signal_frame {
     float psi;
     float cpu;
     float irq;
+    float softirqs;
     float memory;
     float thermal;
     float cpufreq;

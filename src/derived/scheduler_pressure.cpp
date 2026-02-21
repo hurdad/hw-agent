@@ -19,7 +19,7 @@ float clamp01(const float value) {
 void SchedulerPressure::sample(model::signal_frame& frame) noexcept {
   const float cpu_norm = clamp01(frame.cpu / 100.0F);
   const float psi_norm = clamp01(frame.psi / 10.0F);
-  const float softirq_norm = clamp01(frame.scheduler_pressure);
+  const float softirq_norm = clamp01(frame.softirqs);
 
   if (!has_irq_baseline_) {
     irq_baseline_ = frame.irq > 1.0F ? frame.irq : 1.0F;
