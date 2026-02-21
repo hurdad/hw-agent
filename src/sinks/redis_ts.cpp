@@ -119,6 +119,7 @@ bool RedisTsSink::publish_impl(model::signal_frame& frame) {
       {"raw:psi", sanitize_value(frame.psi)},
       {"raw:cpu", sanitize_value(frame.cpu)},
       {"raw:irq", sanitize_value(frame.irq)},
+      {"raw:softirqs", sanitize_value(frame.softirqs)},
       {"raw:memory", sanitize_value(frame.memory)},
       {"raw:thermal", sanitize_value(frame.thermal)},
       {"raw:cpufreq", sanitize_value(frame.cpufreq)},
