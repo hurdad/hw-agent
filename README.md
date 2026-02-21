@@ -170,6 +170,12 @@ Run:
 
 `configs/agent.yaml`
 
+Additional preset profiles are available:
+
+- `configs/agent.cpu-only.yaml`
+- `configs/agent.cpu-discrete-gpu.yaml`
+- `configs/agent.cpu-tegrastats-jetson.yaml`
+
 ```yaml
 tick_ms: 100
 
