@@ -9,22 +9,30 @@ constexpr const char* kCpuFreqPath = "/sys/devices/system/cpu/cpufreq";
 }
 
 PowerSensor::PowerSensor() {
-  for (const auto& entry : std::filesystem::directory_iterator(kCpuFreqPath)) {
-    if (!entry.is_directory()) {
-      continue;
+  try {
+    if (!std::filesystem::exists(kCpuFreqPath)) {
+      return;
     }
 
-    const std::string name = entry.path().filename().string();
-    if (name.rfind("policy", 0) != 0) {
-      continue;
+    for (const auto& entry : std::filesystem::directory_iterator(kCpuFreqPath)) {
+      if (!entry.is_directory()) {
+        continue;
+      }
+
+      const std::string name = entry.path().filename().string();
+      if (name.rfind("policy", 0) != 0) {
+        continue;
+      }
+
+      const std::string base_path = entry.path().string();
+
+      PolicySource source{};
+      source.cur_freq_file = std::fopen((base_path + "/scaling_cur_freq").c_str(), "r");
+      source.max_freq_file = std::fopen((base_path + "/scaling_max_freq").c_str(), "r");
+      policies_.push_back(source);
     }
-
-    const std::string base_path = entry.path().string();
-
-    PolicySource source{};
-    source.cur_freq_file = std::fopen((base_path + "/scaling_cur_freq").c_str(), "r");
-    source.max_freq_file = std::fopen((base_path + "/scaling_max_freq").c_str(), "r");
-    policies_.push_back(source);
+  } catch (const std::filesystem::filesystem_error&) {
+    policies_.clear();
   }
 }
 
