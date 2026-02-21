@@ -15,7 +15,7 @@ class CpuFreqSensor {
   CpuFreqSensor(const CpuFreqSensor&) = delete;
   CpuFreqSensor& operator=(const CpuFreqSensor&) = delete;
 
-  void sample(model::signal_frame& frame) noexcept;
+  bool sample(model::signal_frame& frame) noexcept;
 
  private:
   std::vector<std::FILE*> files_{};

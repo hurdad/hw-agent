@@ -16,7 +16,7 @@ class InterruptsSensor {
   InterruptsSensor(const InterruptsSensor&) = delete;
   InterruptsSensor& operator=(const InterruptsSensor&) = delete;
 
-  void sample(model::signal_frame& frame) noexcept;
+  bool sample(model::signal_frame& frame) noexcept;
 
  private:
   static constexpr std::size_t kReadBufferSize = 256;

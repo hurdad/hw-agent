@@ -14,27 +14,27 @@ CpuSensor::~CpuSensor() {
   }
 }
 
-void CpuSensor::sample(model::signal_frame& frame) noexcept {
+bool CpuSensor::sample(model::signal_frame& frame) noexcept {
   if (file_ == nullptr) {
     frame.cpu = 0.0F;
-    return;
+    return false;
   }
 
   if (std::fseek(file_, 0L, SEEK_SET) != 0) {
     frame.cpu = 0.0F;
-    return;
+    return false;
   }
 
   char buffer[kReadBufferSize]{};
   if (std::fgets(buffer, static_cast<int>(sizeof(buffer)), file_) == nullptr) {
     frame.cpu = 0.0F;
-    return;
+    return false;
   }
 
   const char* cursor = buffer;
   if (cursor[0] != 'c' || cursor[1] != 'p' || cursor[2] != 'u' || cursor[3] != ' ') {
     frame.cpu = 0.0F;
-    return;
+    return false;
   }
   cursor += 4;
 
@@ -52,7 +52,7 @@ void CpuSensor::sample(model::signal_frame& frame) noexcept {
     const unsigned long long parsed = std::strtoull(cursor, &end, 10);
     if (errno != 0 || end == cursor) {
       frame.cpu = 0.0F;
-      return;
+      return false;
     }
     values[i] = parsed;
     cursor = end;
@@ -67,7 +67,7 @@ void CpuSensor::sample(model::signal_frame& frame) noexcept {
     prev_total_ = total;
     prev_idle_ = idle;
     frame.cpu = 0.0F;
-    return;
+    return true;
   }
 
   const std::uint64_t total_delta = total - prev_total_;
@@ -78,11 +78,12 @@ void CpuSensor::sample(model::signal_frame& frame) noexcept {
 
   if (total_delta == 0) {
     frame.cpu = 0.0F;
-    return;
+    return true;
   }
 
   const float busy_delta = static_cast<float>(total_delta - idle_delta);
   frame.cpu = (busy_delta / static_cast<float>(total_delta)) * 100.0F;
+  return true;
 }
 
 }  // namespace hw_agent::sensors

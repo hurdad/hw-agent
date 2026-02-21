@@ -15,7 +15,7 @@ class CpuSensor {
   CpuSensor(const CpuSensor&) = delete;
   CpuSensor& operator=(const CpuSensor&) = delete;
 
-  void sample(model::signal_frame& frame) noexcept;
+  bool sample(model::signal_frame& frame) noexcept;
 
  private:
   static constexpr std::size_t kReadBufferSize = 512;

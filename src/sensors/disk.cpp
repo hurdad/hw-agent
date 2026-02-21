@@ -39,15 +39,15 @@ DiskSensor::~DiskSensor() {
   }
 }
 
-void DiskSensor::sample(model::signal_frame& frame) noexcept {
+bool DiskSensor::sample(model::signal_frame& frame) noexcept {
   if (diskstats_ == nullptr) {
     frame.disk = 0.0F;
-    return;
+    return false;
   }
 
   if (std::fseek(diskstats_, 0L, SEEK_SET) != 0) {
     frame.disk = 0.0F;
-    return;
+    return false;
   }
 
   raw_ = {};
@@ -109,7 +109,7 @@ void DiskSensor::sample(model::signal_frame& frame) noexcept {
   if (std::ferror(diskstats_) != 0) {
     std::clearerr(diskstats_);
     frame.disk = 0.0F;
-    return;
+    return false;
   }
 
   const std::uint64_t completed = raw_.reads_completed + raw_.writes_completed;
@@ -134,6 +134,7 @@ void DiskSensor::sample(model::signal_frame& frame) noexcept {
   }
 
   frame.disk = raw_.disk_wait_estimation_ms;
+  return true;
 }
 
 const DiskSensor::RawFields& DiskSensor::raw() const noexcept { return raw_; }

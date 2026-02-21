@@ -69,7 +69,7 @@ ThermalSensor::~ThermalSensor() {
   }
 }
 
-void ThermalSensor::sample(model::signal_frame& frame) noexcept {
+bool ThermalSensor::sample(model::signal_frame& frame) noexcept {
   raw_.hottest_zone.clear();
   raw_.hottest_temp_c = 0.0F;
 
@@ -85,7 +85,10 @@ void ThermalSensor::sample(model::signal_frame& frame) noexcept {
       }
     }
 
-    const float zone_temp_c = read_temp_c(zone.file);
+    float zone_temp_c = 0.0F;
+    if (!read_temp_c(zone.file, zone_temp_c)) {
+      continue;
+    }
     if (zone_temp_c > max_temp_c) {
       max_temp_c = zone_temp_c;
       max_index = i;
@@ -99,6 +102,7 @@ void ThermalSensor::sample(model::signal_frame& frame) noexcept {
 
   raw_.headroom_c = raw_.throttle_temp_c - raw_.hottest_temp_c;
   frame.thermal = raw_.headroom_c;
+  return std::isfinite(max_temp_c);
 }
 
 void ThermalSensor::set_throttle_temp_c(const float throttle_temp_c) noexcept {
@@ -107,22 +111,26 @@ void ThermalSensor::set_throttle_temp_c(const float throttle_temp_c) noexcept {
 
 const ThermalSensor::RawFields& ThermalSensor::raw() const noexcept { return raw_; }
 
-float ThermalSensor::read_temp_c(std::FILE* file) noexcept {
+bool ThermalSensor::read_temp_c(std::FILE* file, float& temp_c) noexcept {
   if (file == nullptr) {
-    return -std::numeric_limits<float>::infinity();
+    temp_c = -std::numeric_limits<float>::infinity();
+    return false;
   }
 
   if (std::fseek(file, 0L, SEEK_SET) != 0) {
-    return -std::numeric_limits<float>::infinity();
+    temp_c = -std::numeric_limits<float>::infinity();
+    return false;
   }
 
   long long raw_temp = 0;
   if (std::fscanf(file, "%lld", &raw_temp) != 1) {
     std::clearerr(file);
-    return -std::numeric_limits<float>::infinity();
+    temp_c = -std::numeric_limits<float>::infinity();
+    return false;
   }
 
-  return static_cast<float>(raw_temp) / 1000.0F;
+  temp_c = static_cast<float>(raw_temp) / 1000.0F;
+  return true;
 }
 
 }  // namespace hw_agent::sensors

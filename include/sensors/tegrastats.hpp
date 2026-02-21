@@ -25,7 +25,7 @@ class TegraStatsSensor {
   TegraStatsSensor(const TegraStatsSensor&) = delete;
   TegraStatsSensor& operator=(const TegraStatsSensor&) = delete;
 
-  void sample(model::signal_frame& frame) noexcept;
+  bool sample(model::signal_frame& frame) noexcept;
 
   [[nodiscard]] bool enabled() const noexcept;
   [[nodiscard]] const RawFields& raw() const noexcept;

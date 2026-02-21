@@ -25,7 +25,7 @@ class ThermalSensor {
   ThermalSensor(ThermalSensor&&) = delete;
   ThermalSensor& operator=(ThermalSensor&&) = delete;
 
-  void sample(model::signal_frame& frame) noexcept;
+  bool sample(model::signal_frame& frame) noexcept;
   void set_throttle_temp_c(float throttle_temp_c) noexcept;
   const RawFields& raw() const noexcept;
 
@@ -36,7 +36,7 @@ class ThermalSensor {
     std::FILE* file{nullptr};
   };
 
-  static float read_temp_c(std::FILE* file) noexcept;
+  static bool read_temp_c(std::FILE* file, float& temp_c) noexcept;
 
   std::vector<ZoneSource> zones_{};
   RawFields raw_{};

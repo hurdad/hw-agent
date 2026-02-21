@@ -22,6 +22,10 @@ CpuFreqSensor::CpuFreqSensor() {
   ::globfree(&matches);
 }
 
+bool CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
+  if (file_ == nullptr) {
+    frame.cpufreq = 0.0F;
+    return false;
 CpuFreqSensor::~CpuFreqSensor() {
   for (std::FILE* file : files_) {
     if (file != nullptr) {
@@ -34,7 +38,7 @@ CpuFreqSensor::~CpuFreqSensor() {
 void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
   if (files_.empty()) {
     frame.cpufreq = 0.0F;
-    return;
+    return false;
   }
 
   char value_buffer[64]{};
@@ -65,7 +69,7 @@ void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
 
   if (count == 0) {
     frame.cpufreq = 0.0F;
-    return;
+    return true;
   }
 
   const float current_average_mhz = static_cast<float>(total_mhz / static_cast<double>(count));
@@ -79,6 +83,7 @@ void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
   }
 
   frame.cpufreq = ema_mhz_;
+  return true;
 }
 
 }  // namespace hw_agent::sensors

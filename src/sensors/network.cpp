@@ -78,14 +78,20 @@ NetworkSensor::~NetworkSensor() {
   }
 }
 
-void NetworkSensor::sample(model::signal_frame& frame) noexcept {
+bool NetworkSensor::sample(model::signal_frame& frame) noexcept {
   raw_ = {};
 
+  bool all_reads_ok = true;
   for (const InterfaceSource& iface : interfaces_) {
-    raw_.rx_packets += read_u64_file(iface.rx_packets_file);
-    raw_.tx_packets += read_u64_file(iface.tx_packets_file);
-    raw_.rx_dropped += read_u64_file(iface.rx_dropped_file);
-    raw_.tx_dropped += read_u64_file(iface.tx_dropped_file);
+    std::uint64_t value = 0;
+    all_reads_ok = read_u64_file(iface.rx_packets_file, value) && all_reads_ok;
+    raw_.rx_packets += value;
+    all_reads_ok = read_u64_file(iface.tx_packets_file, value) && all_reads_ok;
+    raw_.tx_packets += value;
+    all_reads_ok = read_u64_file(iface.rx_dropped_file, value) && all_reads_ok;
+    raw_.rx_dropped += value;
+    all_reads_ok = read_u64_file(iface.tx_dropped_file, value) && all_reads_ok;
+    raw_.tx_dropped += value;
   }
 
   const std::uint64_t total_packets = raw_.rx_packets + raw_.tx_packets;
@@ -111,26 +117,31 @@ void NetworkSensor::sample(model::signal_frame& frame) noexcept {
   }
 
   frame.network = raw_.packet_drop_rate;
+  return all_reads_ok;
 }
 
 const NetworkSensor::RawFields& NetworkSensor::raw() const noexcept { return raw_; }
 
-std::uint64_t NetworkSensor::read_u64_file(std::FILE* file) noexcept {
+bool NetworkSensor::read_u64_file(std::FILE* file, std::uint64_t& value) noexcept {
   if (file == nullptr) {
-    return 0;
+    value = 0;
+    return false;
   }
 
   if (std::fseek(file, 0L, SEEK_SET) != 0) {
-    return 0;
+    value = 0;
+    return false;
   }
 
-  unsigned long long value = 0;
-  if (std::fscanf(file, "%llu", &value) != 1) {
+  unsigned long long parsed = 0;
+  if (std::fscanf(file, "%llu", &parsed) != 1) {
     std::clearerr(file);
-    return 0;
+    value = 0;
+    return false;
   }
 
-  return value;
+  value = static_cast<std::uint64_t>(parsed);
+  return true;
 }
 
 }  // namespace hw_agent::sensors

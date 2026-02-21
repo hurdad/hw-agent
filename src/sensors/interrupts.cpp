@@ -16,15 +16,15 @@ InterruptsSensor::~InterruptsSensor() {
   }
 }
 
-void InterruptsSensor::sample(model::signal_frame& frame) noexcept {
+bool InterruptsSensor::sample(model::signal_frame& frame) noexcept {
   if (file_ == nullptr) {
     frame.irq = 0.0F;
-    return;
+    return false;
   }
 
   if (std::fseek(file_, 0L, SEEK_SET) != 0) {
     frame.irq = 0.0F;
-    return;
+    return false;
   }
 
   char buffer[kReadBufferSize]{};
@@ -39,7 +39,7 @@ void InterruptsSensor::sample(model::signal_frame& frame) noexcept {
 
   if (!found) {
     frame.irq = 0.0F;
-    return;
+    return false;
   }
 
   const char* cursor = buffer + 5;
@@ -52,7 +52,7 @@ void InterruptsSensor::sample(model::signal_frame& frame) noexcept {
   const unsigned long long total_interrupts = std::strtoull(cursor, &end, 10);
   if (errno != 0 || end == cursor) {
     frame.irq = 0.0F;
-    return;
+    return false;
   }
 
   if (!has_prev_) {
@@ -60,7 +60,7 @@ void InterruptsSensor::sample(model::signal_frame& frame) noexcept {
     prev_total_ = total_interrupts;
     prev_timestamp_ns_ = frame.timestamp;
     frame.irq = 0.0F;
-    return;
+    return true;
   }
 
   const std::uint64_t count_delta = total_interrupts >= prev_total_ ? (total_interrupts - prev_total_) : 0;
@@ -71,11 +71,12 @@ void InterruptsSensor::sample(model::signal_frame& frame) noexcept {
 
   if (time_delta_ns == 0) {
     frame.irq = 0.0F;
-    return;
+    return true;
   }
 
   const double seconds = static_cast<double>(time_delta_ns) / 1'000'000'000.0;
   frame.irq = static_cast<float>(static_cast<double>(count_delta) / seconds);
+  return true;
 }
 
 }  // namespace hw_agent::sensors

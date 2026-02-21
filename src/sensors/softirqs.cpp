@@ -16,22 +16,22 @@ SoftirqsSensor::~SoftirqsSensor() {
   }
 }
 
-void SoftirqsSensor::sample(model::signal_frame& frame) noexcept {
+bool SoftirqsSensor::sample(model::signal_frame& frame) noexcept {
   if (file_ == nullptr) {
     frame.softirqs = 0.0F;
-    return;
+    return false;
   }
 
   if (std::fseek(file_, 0L, SEEK_SET) != 0) {
     frame.softirqs = 0.0F;
-    return;
+    return false;
   }
 
   char buffer[kReadBufferSize]{};
   const std::size_t bytes_read = std::fread(buffer, 1, sizeof(buffer) - 1, file_);
   if (bytes_read == 0U) {
     frame.softirqs = 0.0F;
-    return;
+    return false;
   }
   buffer[bytes_read] = '\0';
 
@@ -73,7 +73,7 @@ void SoftirqsSensor::sample(model::signal_frame& frame) noexcept {
     prev_total_ = total_softirqs;
     baseline_delta_ = 0.0F;
     frame.softirqs = 0.0F;
-    return;
+    return true;
   }
 
   const std::uint64_t delta = total_softirqs >= prev_total_ ? (total_softirqs - prev_total_) : 0;
@@ -83,7 +83,7 @@ void SoftirqsSensor::sample(model::signal_frame& frame) noexcept {
   if (baseline_delta_ <= 0.0F) {
     baseline_delta_ = delta_f;
     frame.softirqs = 0.0F;
-    return;
+    return true;
   }
 
   constexpr float alpha = 0.2F;
@@ -91,12 +91,13 @@ void SoftirqsSensor::sample(model::signal_frame& frame) noexcept {
 
   if (baseline_delta_ <= 0.0F) {
     frame.softirqs = 0.0F;
-    return;
+    return true;
   }
 
   const float burst_ratio = delta_f / baseline_delta_;
   const float score = (burst_ratio - 1.5F) / 2.5F;
   frame.softirqs = score < 0.0F ? 0.0F : (score > 1.0F ? 1.0F : score);
+  return true;
 }
 
 }  // namespace hw_agent::sensors
