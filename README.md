@@ -126,6 +126,12 @@ You will immediately see the node stability dashboard.
 
 No manual setup required.
 
+Run the TUI:
+
+```bash
+docker run -it --rm --network=host ghcr.io/hurdad/hw-agent-tui:latest
+```
+
 ---
 
 ## Building Locally
