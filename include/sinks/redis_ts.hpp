@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "model/signal_frame.hpp"
@@ -20,6 +21,7 @@ struct RedisTsOptions {
   std::string key_prefix{"edge:node"};
   std::uint32_t connect_timeout_ms{1000};
   bool publish_health{true};
+  std::vector<std::string> enabled_metrics{};
 };
 
 class RedisTsSink {
@@ -53,6 +55,8 @@ class RedisTsSink {
   std::vector<std::string> command_args_;
   std::vector<const char*> command_argv_;
   std::vector<std::size_t> command_argv_len_;
+  std::vector<std::string> enabled_metrics_;
+  std::unordered_set<std::string> enabled_metric_set_;
   bool timeseries_available_{true};
   bool schema_ready_{false};
 };
