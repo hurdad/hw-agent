@@ -356,6 +356,37 @@ int test_config_parsing_edge_cases() {
     return fail("test_config_parsing_edge_cases", "redis should remain disabled when section is missing");
   }
 
+  const auto gpu_index = std::filesystem::temp_directory_path() / "hw_agent_gpu_index.yaml";
+  {
+    std::ofstream out(gpu_index);
+    out << "gpu:\n  device_index: 2\n";
+  }
+
+  const auto gpu_config = load_agent_config(gpu_index.string());
+  std::filesystem::remove(gpu_index);
+
+  if (gpu_config.gpu_device_index != 2U) {
+    return fail("test_config_parsing_edge_cases", "gpu.device_index should parse");
+  }
+
+  const auto bad_gpu_index = std::filesystem::temp_directory_path() / "hw_agent_bad_gpu_index.yaml";
+  {
+    std::ofstream out(bad_gpu_index);
+    out << "gpu:\n  device_index: -1\n";
+  }
+
+  bool bad_gpu_index_threw = false;
+  try {
+    (void)load_agent_config(bad_gpu_index.string());
+  } catch (const std::exception&) {
+    bad_gpu_index_threw = true;
+  }
+  std::filesystem::remove(bad_gpu_index);
+
+  if (!bad_gpu_index_threw) {
+    return fail("test_config_parsing_edge_cases", "negative gpu.device_index should throw");
+  }
+
   return 0;
 }
 

@@ -37,7 +37,7 @@ Agent::Agent(AgentConfig config)
     }
   }
 
-  gpu_sensor_ = sensors::gpu::make_nvml_sensor();
+  gpu_sensor_ = sensors::gpu::make_nvml_sensor(config.gpu_device_index);
   if (gpu_sensor_ != nullptr && gpu_sensor_->available()) {
     std::cerr << "[agent] detected NVML GPU sensor\n";
   } else {

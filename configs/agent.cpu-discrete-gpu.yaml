@@ -1,6 +1,9 @@
 tick_rate_hz: 10
 thermal_throttle_temp_c: 84.0
 
+gpu:
+  device_index: 0
+
 agent:
   publish_health: true
   stdout_debug: false

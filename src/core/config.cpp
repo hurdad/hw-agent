@@ -61,6 +61,15 @@ void apply_key_value(AgentConfig& config, const std::string& key, const std::str
     return;
   }
 
+  if (key == "gpu.device_index") {
+    const auto parsed_index = std::stoll(value);
+    if (parsed_index < 0) {
+      throw std::runtime_error("gpu.device_index must be greater than or equal to 0");
+    }
+    config.gpu_device_index = static_cast<std::uint32_t>(parsed_index);
+    return;
+  }
+
   if (key == "agent.publish_health") {
     config.publish_health = parse_bool(value);
     return;
