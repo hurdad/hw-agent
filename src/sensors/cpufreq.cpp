@@ -26,24 +26,16 @@ void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
     return;
   }
 
-  char buffer[kReadBufferSize]{};
-  const std::size_t bytes_read = std::fread(buffer, 1, sizeof(buffer) - 1, file_);
-  if (bytes_read == 0U) {
-    frame.cpufreq = 0.0F;
-    return;
-  }
-  buffer[bytes_read] = '\0';
-
   constexpr char needle[] = "cpu MHz";
   constexpr std::size_t needle_size = sizeof(needle) - 1;
 
-  const char* cursor = buffer;
+  char line_buffer[kReadBufferSize]{};
   double total_mhz = 0.0;
   std::size_t count = 0;
 
-  while (*cursor != '\0') {
-    if (std::memcmp(cursor, needle, needle_size) == 0) {
-      const char* colon = std::strchr(cursor, ':');
+  while (std::fgets(line_buffer, static_cast<int>(sizeof(line_buffer)), file_) != nullptr) {
+    if (std::memcmp(line_buffer, needle, needle_size) == 0) {
+      const char* colon = std::strchr(line_buffer, ':');
       if (colon != nullptr) {
         char* end = nullptr;
         errno = 0;
@@ -54,12 +46,6 @@ void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
         }
       }
     }
-
-    const char* next_line = std::strchr(cursor, '\n');
-    if (next_line == nullptr) {
-      break;
-    }
-    cursor = next_line + 1;
   }
 
   if (count == 0) {
