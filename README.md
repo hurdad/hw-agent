@@ -82,6 +82,7 @@ edge:<node>:agent:heartbeat
 edge:<node>:agent:loop_jitter
 edge:<node>:agent:compute_time
 edge:<node>:agent:redis_latency
+edge:<node>:agent:redis_errors
 edge:<node>:agent:missed_cycles
 edge:<node>:agent:sensor_failures
 ```

@@ -136,7 +136,9 @@ void Agent::publish_sinks(AgentStats& stats) {
   }
 
   if (redis_sink_ != nullptr) {
-    redis_sink_->publish(frame_);
+    if (!redis_sink_->publish(frame_)) {
+      ++frame_.agent.redis_errors;
+    }
   }
 }
 

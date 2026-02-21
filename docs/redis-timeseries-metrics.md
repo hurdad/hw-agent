@@ -74,6 +74,7 @@ When `agent.publish_health: true`, these additional keys are included in the sam
 - `<prefix>:agent:loop_jitter`
 - `<prefix>:agent:compute_time`
 - `<prefix>:agent:redis_latency`
+- `<prefix>:agent:redis_errors`
 - `<prefix>:agent:sensor_failures`
 - `<prefix>:agent:missed_cycles`
 
@@ -83,6 +84,7 @@ When `agent.publish_health: true`, these additional keys are included in the sam
 | `agent:loop_jitter` | every tick | every tick |
 | `agent:compute_time` | every tick | every tick |
 | `agent:redis_latency` | every tick | every tick (measured around Redis publish call) |
+| `agent:redis_errors` | every tick | monotonic counter, updated when Redis publish attempts fail |
 | `agent:sensor_failures` | every tick | monotonic counter, updated on sensor sample failure events |
 | `agent:missed_cycles` | every tick | monotonic counter, updated when compute time exceeds tick budget |
 

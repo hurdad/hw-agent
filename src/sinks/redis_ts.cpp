@@ -156,6 +156,7 @@ bool RedisTsSink::publish_impl(model::signal_frame& frame) {
     metrics.push_back({"agent:loop_jitter", sanitize_value(frame.agent.loop_jitter_ms)});
     metrics.push_back({"agent:compute_time", sanitize_value(frame.agent.compute_time_ms)});
     metrics.push_back({"agent:redis_latency", sanitize_value(frame.agent.redis_latency_ms)});
+    metrics.push_back({"agent:redis_errors", static_cast<double>(frame.agent.redis_errors)});
     metrics.push_back({"agent:sensor_failures", static_cast<double>(frame.agent.sensor_failures)});
     metrics.push_back({"agent:missed_cycles", static_cast<double>(frame.agent.missed_cycles)});
   }
