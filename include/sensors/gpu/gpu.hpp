@@ -15,7 +15,7 @@ class GpuSensor {
   virtual ~GpuSensor() = default;
 };
 
-std::unique_ptr<GpuSensor> make_nvml_sensor();
+std::unique_ptr<GpuSensor> make_nvml_sensor(unsigned int device_index);
 std::unique_ptr<GpuSensor> make_none_sensor();
 
 }  // namespace hw_agent::sensors::gpu

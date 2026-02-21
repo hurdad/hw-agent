@@ -230,6 +230,9 @@ To run without Docker, pass the config file path directly:
 ./hw_agent configs/agent.all.debug.yaml
 ```
 
+To target a specific discrete GPU on multi-GPU systems, set `gpu.device_index` in the config (defaults to `0`).
+
+
 ---
 
 ## Design Goals

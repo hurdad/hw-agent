@@ -22,6 +22,7 @@ std::string format_config_settings(const hw_agent::core::AgentConfig& config, co
          << " | tick_interval_ms=" << config.tick_interval.count()
          << " | thermal_throttle_temp_c=" << config.thermal_throttle_temp_c
          << " | thermal_pressure_warning_window_c=" << config.thermal_pressure_warning_window_c
+         << " | gpu_device_index=" << config.gpu_device_index
          << " | publish_health=" << (config.publish_health ? "true" : "false")
          << " | stdout_debug=" << (config.stdout_debug ? "true" : "false")
          << " | redis_enabled=" << (config.redis.enabled ? "true" : "false")

@@ -32,7 +32,7 @@ namespace {
 
 class NvmlGpuSensor final : public GpuSensor {
  public:
-  NvmlGpuSensor() noexcept { init(); }
+  explicit NvmlGpuSensor(unsigned int device_index) noexcept : device_index_(device_index) { init(); }
 
   ~NvmlGpuSensor() override {
     if (initialized_ && fn_shutdown_ != nullptr) {
@@ -140,7 +140,7 @@ class NvmlGpuSensor final : public GpuSensor {
     }
     initialized_ = true;
 
-    if (fn_device_get_handle_by_index_(0U, &device_) != NVML_SUCCESS) {
+    if (fn_device_get_handle_by_index_(device_index_, &device_) != NVML_SUCCESS) {
       return;
     }
 
@@ -163,6 +163,7 @@ class NvmlGpuSensor final : public GpuSensor {
   void* library_{nullptr};
   bool available_{false};
   bool initialized_{false};
+  unsigned int device_index_{0};
   nvmlDevice_t device_{nullptr};
   unsigned int max_graphics_clock_mhz_{0};
   unsigned int power_limit_mw_{0};
@@ -182,6 +183,8 @@ class NvmlGpuSensor final : public GpuSensor {
 
 }  // namespace
 
-std::unique_ptr<GpuSensor> make_nvml_sensor() { return std::make_unique<NvmlGpuSensor>(); }
+std::unique_ptr<GpuSensor> make_nvml_sensor(unsigned int device_index) {
+  return std::make_unique<NvmlGpuSensor>(device_index);
+}
 
 }  // namespace hw_agent::sensors::gpu
