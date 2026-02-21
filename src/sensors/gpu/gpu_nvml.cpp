@@ -35,6 +35,11 @@ class NvmlGpuSensor final : public GpuSensor {
   NvmlGpuSensor() noexcept { init(); }
 
   ~NvmlGpuSensor() override {
+    if (initialized_ && fn_shutdown_ != nullptr) {
+      (void)fn_shutdown_();
+      initialized_ = false;
+    }
+
     if (library_ != nullptr) {
       dlclose(library_);
       library_ = nullptr;
@@ -82,6 +87,7 @@ class NvmlGpuSensor final : public GpuSensor {
 
  private:
   using FnNvmlInit = nvmlReturn_t (*)();
+  using FnNvmlShutdown = nvmlReturn_t (*)();
   using FnNvmlDeviceGetHandleByIndex = nvmlReturn_t (*)(unsigned int, nvmlDevice_t*);
   using FnNvmlDeviceGetUtilizationRates = nvmlReturn_t (*)(nvmlDevice_t, nvmlUtilization_t*);
   using FnNvmlDeviceGetMemoryInfo = nvmlReturn_t (*)(nvmlDevice_t, nvmlMemory_t*);
@@ -108,6 +114,10 @@ class NvmlGpuSensor final : public GpuSensor {
       return;
     }
 
+    if (!resolve(fn_shutdown_, "nvmlShutdown")) {
+      return;
+    }
+
     if (!resolve(fn_device_get_handle_by_index_, "nvmlDeviceGetHandleByIndex_v2") &&
         !resolve(fn_device_get_handle_by_index_, "nvmlDeviceGetHandleByIndex")) {
       return;
@@ -127,6 +137,7 @@ class NvmlGpuSensor final : public GpuSensor {
     if (fn_init_() != NVML_SUCCESS) {
       return;
     }
+    initialized_ = true;
 
     if (fn_device_get_handle_by_index_(0U, &device_) != NVML_SUCCESS) {
       return;
@@ -149,11 +160,13 @@ class NvmlGpuSensor final : public GpuSensor {
 
   void* library_{nullptr};
   bool available_{false};
+  bool initialized_{false};
   nvmlDevice_t device_{nullptr};
   unsigned int max_graphics_clock_mhz_{0};
   unsigned int power_limit_mw_{0};
 
   FnNvmlInit fn_init_{nullptr};
+  FnNvmlShutdown fn_shutdown_{nullptr};
   FnNvmlDeviceGetHandleByIndex fn_device_get_handle_by_index_{nullptr};
   FnNvmlDeviceGetUtilizationRates fn_device_get_utilization_rates_{nullptr};
   FnNvmlDeviceGetMemoryInfo fn_device_get_memory_info_{nullptr};
