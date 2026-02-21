@@ -96,17 +96,29 @@ bool ThermalSensor::sample(model::signal_frame& frame) noexcept {
 
   for (std::size_t i = 0; i < zones_.size(); ++i) {
     ZoneSource& zone = zones_[i];
+    bool opened_in_sample = false;
     if (zone.file == nullptr) {
       zone.file = std::fopen(zone.temp_path.c_str(), "r");
       if (zone.file == nullptr) {
         continue;
       }
+      opened_in_sample = true;
     }
 
     float zone_temp_c = 0.0F;
     if (!read_temp_c(zone.file, zone_temp_c)) {
+      if (opened_in_sample && !owns_files_) {
+        std::fclose(zone.file);
+        zone.file = nullptr;
+      }
       continue;
     }
+
+    if (opened_in_sample && !owns_files_) {
+      std::fclose(zone.file);
+      zone.file = nullptr;
+    }
+
     if (zone_temp_c > max_temp_c) {
       max_temp_c = zone_temp_c;
       max_index = i;
