@@ -1,0 +1,83 @@
+#include "sensors/cpufreq.hpp"
+
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
+
+namespace hw_agent::sensors {
+
+CpuFreqSensor::CpuFreqSensor() : file_(std::fopen("/proc/cpuinfo", "r")) {}
+
+CpuFreqSensor::~CpuFreqSensor() {
+  if (file_ != nullptr) {
+    std::fclose(file_);
+    file_ = nullptr;
+  }
+}
+
+void CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
+  if (file_ == nullptr) {
+    frame.thermal = 0.0F;
+    return;
+  }
+
+  if (std::fseek(file_, 0L, SEEK_SET) != 0) {
+    frame.thermal = 0.0F;
+    return;
+  }
+
+  char buffer[kReadBufferSize]{};
+  const std::size_t bytes_read = std::fread(buffer, 1, sizeof(buffer) - 1, file_);
+  if (bytes_read == 0U) {
+    frame.thermal = 0.0F;
+    return;
+  }
+  buffer[bytes_read] = '\0';
+
+  constexpr char needle[] = "cpu MHz";
+  constexpr std::size_t needle_size = sizeof(needle) - 1;
+
+  const char* cursor = buffer;
+  double total_mhz = 0.0;
+  std::size_t count = 0;
+
+  while (*cursor != '\0') {
+    if (std::memcmp(cursor, needle, needle_size) == 0) {
+      const char* colon = std::strchr(cursor, ':');
+      if (colon != nullptr) {
+        char* end = nullptr;
+        errno = 0;
+        const double mhz = std::strtod(colon + 1, &end);
+        if (errno == 0 && end != colon + 1) {
+          total_mhz += mhz;
+          ++count;
+        }
+      }
+    }
+
+    const char* next_line = std::strchr(cursor, '\n');
+    if (next_line == nullptr) {
+      break;
+    }
+    cursor = next_line + 1;
+  }
+
+  if (count == 0) {
+    frame.thermal = 0.0F;
+    return;
+  }
+
+  const float current_average_mhz = static_cast<float>(total_mhz / static_cast<double>(count));
+
+  if (!has_prev_) {
+    has_prev_ = true;
+    prev_average_mhz_ = current_average_mhz;
+    frame.thermal = 0.0F;
+    return;
+  }
+
+  frame.thermal = (prev_average_mhz_ + current_average_mhz) * 0.5F;
+  prev_average_mhz_ = current_average_mhz;
+}
+
+}  // namespace hw_agent::sensors
