@@ -107,7 +107,7 @@ bool Agent::sensor_enabled(const AgentConfig& config, const std::string& name) c
 
 void Agent::collect_sensors(AgentStats& stats) {
   ++stats.sensor_cycles;
-  frame_.timestamp = timestamp_now_ns();
+  frame_.monotonic_ns = monotonic_timestamp_now_ns();
   frame_.agent.sensor_failures = 0;
 
   for (auto& sensor : sensor_registry_) {

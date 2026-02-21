@@ -13,7 +13,7 @@ enum class system_state : std::uint8_t {
 };
 
 // ABI frame shared across modules.
-// POD layout: one timestamp + tightly packed float signals.
+// POD layout: one monotonic timestamp + tightly packed float signals.
 struct signal_frame {
     struct AgentHealth {
         std::uint64_t heartbeat_ms;
@@ -25,7 +25,7 @@ struct signal_frame {
         std::uint32_t missed_cycles;
     };
 
-    std::uint64_t timestamp;
+    std::uint64_t monotonic_ns;
 
     // Raw signals.
     float psi;

@@ -351,7 +351,7 @@ int test_interrupts_and_softirqs_delta_and_underflow_protection() {
     return fail("test_interrupts_and_softirqs_delta_and_underflow_protection", "failed to seed initial proc data");
   }
 
-  frame.timestamp = 1'000'000'000ULL;
+  frame.monotonic_ns = 1'000'000'000ULL;
   interrupts.sample(frame);
   softirqs.sample(frame);
 
@@ -364,7 +364,7 @@ int test_interrupts_and_softirqs_delta_and_underflow_protection() {
     return fail("test_interrupts_and_softirqs_delta_and_underflow_protection", "failed to write second sample");
   }
 
-  frame.timestamp = 2'000'000'000ULL;
+  frame.monotonic_ns = 2'000'000'000ULL;
   interrupts.sample(frame);
   softirqs.sample(frame);
 
@@ -381,7 +381,7 @@ int test_interrupts_and_softirqs_delta_and_underflow_protection() {
     return fail("test_interrupts_and_softirqs_delta_and_underflow_protection", "failed to write underflow sample");
   }
 
-  frame.timestamp = 3'000'000'000ULL;
+  frame.monotonic_ns = 3'000'000'000ULL;
   interrupts.sample(frame);
   softirqs.sample(frame);
 
