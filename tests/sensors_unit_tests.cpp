@@ -269,6 +269,31 @@ int test_cpufreq_sensor_with_injected_scaling_cur_freq_files() {
   return 0;
 }
 
+int test_cpufreq_sensor_returns_failure_when_all_sources_are_unreadable() {
+  std::FILE* cpu0 = std::tmpfile();
+  std::FILE* cpu1 = std::tmpfile();
+  if (!write_temp_file(cpu0, "\n") || !write_temp_file(cpu1, "\n")) {
+    return fail("test_cpufreq_sensor_returns_failure_when_all_sources_are_unreadable",
+                "failed writing unreadable cpufreq snapshots");
+  }
+
+  CpuFreqSensor sensor({cpu0, cpu1}, false);
+  signal_frame frame{};
+  if (sensor.sample(frame)) {
+    return fail("test_cpufreq_sensor_returns_failure_when_all_sources_are_unreadable",
+                "sample should fail when all cpufreq inputs are unreadable");
+  }
+
+  if (!almost_equal(frame.cpufreq, 0.0F)) {
+    return fail("test_cpufreq_sensor_returns_failure_when_all_sources_are_unreadable",
+                "cpufreq should reset to zero when reads fail");
+  }
+
+  std::fclose(cpu0);
+  std::fclose(cpu1);
+  return 0;
+}
+
 
 std::string build_softirqs_snapshot(const std::vector<std::uint64_t>& hi_values,
                                     const std::vector<std::uint64_t>& timer_values) {
@@ -397,6 +422,9 @@ int main() {
     return rc;
   }
   if (int rc = test_cpufreq_sensor_with_injected_scaling_cur_freq_files(); rc != 0) {
+    return rc;
+  }
+  if (int rc = test_cpufreq_sensor_returns_failure_when_all_sources_are_unreadable(); rc != 0) {
     return rc;
   }
   if (int rc = test_softirqs_sensor_handles_large_proc_softirqs_snapshots(); rc != 0) {

@@ -73,7 +73,7 @@ bool CpuFreqSensor::sample(model::signal_frame& frame) noexcept {
 
   if (count == 0) {
     frame.cpufreq = 0.0F;
-    return true;
+    return false;
   }
 
   const float current_average_mhz = static_cast<float>(total_mhz / static_cast<double>(count));
