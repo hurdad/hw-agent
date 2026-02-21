@@ -14,13 +14,21 @@ constexpr const char* kSysClassThermal = "/sys/class/thermal";
 
 ThermalSensor::ThermalSensor(const float throttle_temp_c) {
   raw_.throttle_temp_c = throttle_temp_c;
+  discover_zones(kSysClassThermal);
+}
 
+ThermalSensor::ThermalSensor(const float throttle_temp_c, std::string thermal_root) {
+  raw_.throttle_temp_c = throttle_temp_c;
+  discover_zones(thermal_root);
+}
+
+void ThermalSensor::discover_zones(const std::string& thermal_root) {
   try {
-    if (!std::filesystem::exists(kSysClassThermal)) {
+    if (!std::filesystem::exists(thermal_root)) {
       return;
     }
 
-    for (const auto& entry : std::filesystem::directory_iterator(kSysClassThermal)) {
+    for (const auto& entry : std::filesystem::directory_iterator(thermal_root)) {
       if (!entry.is_directory()) {
         continue;
       }
@@ -95,9 +103,10 @@ void ThermalSensor::sample(model::signal_frame& frame) noexcept {
   if (std::isfinite(max_temp_c)) {
     raw_.hottest_temp_c = max_temp_c;
     raw_.hottest_zone = zones_[max_index].name;
+    raw_.headroom_c = raw_.throttle_temp_c - raw_.hottest_temp_c;
+  } else {
+    raw_.headroom_c = 0.0F;
   }
-
-  raw_.headroom_c = raw_.throttle_temp_c - raw_.hottest_temp_c;
   frame.thermal = raw_.headroom_c;
 }
 

@@ -20,6 +20,7 @@
 #include "sensors/interrupts.hpp"
 #include "sensors/memory.hpp"
 #include "sensors/softirqs.hpp"
+#include "sensors/thermal.hpp"
 #include "sinks/redis_ts.hpp"
 
 using hw_agent::core::Sampler;
@@ -29,6 +30,7 @@ using hw_agent::model::signal_frame;
 using hw_agent::sensors::InterruptsSensor;
 using hw_agent::sensors::MemorySensor;
 using hw_agent::sensors::SoftirqsSensor;
+using hw_agent::sensors::ThermalSensor;
 using hw_agent::sinks::RedisTsOptions;
 using hw_agent::sinks::RedisTsSink;
 
@@ -286,6 +288,58 @@ int test_interrupts_and_softirqs_delta_and_underflow_protection() {
 }
 
 
+int test_thermal_sensor_headroom_and_all_zones_fail_fallback() {
+  const auto thermal_root = std::filesystem::temp_directory_path() / "hw_agent_thermal_test";
+  std::filesystem::remove_all(thermal_root);
+  std::filesystem::create_directories(thermal_root / "thermal_zone0");
+  std::filesystem::create_directories(thermal_root / "thermal_zone1");
+
+  {
+    std::ofstream out(thermal_root / "thermal_zone0" / "type");
+    out << "cpu-thermal\n";
+  }
+  {
+    std::ofstream out(thermal_root / "thermal_zone1" / "type");
+    out << "gpu-thermal\n";
+  }
+  {
+    std::ofstream out(thermal_root / "thermal_zone0" / "temp");
+    out << "53000\n";
+  }
+  {
+    std::ofstream out(thermal_root / "thermal_zone1" / "temp");
+    out << "61000\n";
+  }
+
+  ThermalSensor sensor(85.0F, thermal_root.string());
+  signal_frame frame{};
+  sensor.sample(frame);
+
+  if (!almost_equal(frame.thermal, 24.0F)) {
+    std::filesystem::remove_all(thermal_root);
+    return fail("test_thermal_sensor_headroom_and_all_zones_fail_fallback", "headroom should be throttle minus hottest zone temperature");
+  }
+
+  if (!almost_equal(sensor.raw().hottest_temp_c, 61.0F) || sensor.raw().hottest_zone != "gpu-thermal") {
+    std::filesystem::remove_all(thermal_root);
+    return fail("test_thermal_sensor_headroom_and_all_zones_fail_fallback", "hottest zone tracking is incorrect");
+  }
+
+  std::filesystem::remove(thermal_root / "thermal_zone0" / "temp");
+  std::filesystem::remove(thermal_root / "thermal_zone1" / "temp");
+
+  ThermalSensor failing_sensor(85.0F, thermal_root.string());
+  failing_sensor.sample(frame);
+
+  if (!almost_equal(frame.thermal, 0.0F) || !almost_equal(failing_sensor.raw().headroom_c, 0.0F)) {
+    std::filesystem::remove_all(thermal_root);
+    return fail("test_thermal_sensor_headroom_and_all_zones_fail_fallback", "all-zones-fail fallback should clamp headroom to zero");
+  }
+
+  std::filesystem::remove_all(thermal_root);
+  return 0;
+}
+
 int test_gpu_memory_and_emc_metrics_are_distinct() {
   g_redis_mock = {};
 
@@ -390,6 +444,7 @@ int main() {
   if (int rc = test_sampler_should_sample_every(); rc != 0) return rc;
   if (int rc = test_config_parsing_edge_cases(); rc != 0) return rc;
   if (int rc = test_interrupts_and_softirqs_delta_and_underflow_protection(); rc != 0) return rc;
+  if (int rc = test_thermal_sensor_headroom_and_all_zones_fail_fallback(); rc != 0) return rc;
   if (int rc = test_redis_sink_publish_logic(); rc != 0) return rc;
   if (int rc = test_redis_health_metrics_include_error_counter(); rc != 0) return rc;
   if (int rc = test_gpu_memory_and_emc_metrics_are_distinct(); rc != 0) return rc;
