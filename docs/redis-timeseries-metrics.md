@@ -1,24 +1,31 @@
 # RedisTimeSeries metrics populated by `hw-agent`
 
-This document breaks down every RedisTimeSeries metric written by `hw-agent`, including
-how often each metric is *published* and how often its underlying value is *refreshed*.
+This document describes every RedisTimeSeries metric written by `hw-agent`, including:
+
+- publish cadence (how often the key is written), and
+- source refresh cadence (how often the underlying value is recomputed).
 
 ## Cadence model
 
-- **Tick interval** is controlled by `tick_rate_hz` (default `10`), so one tick is `100 ms` by default.
+- **Tick interval** is controlled by `tick_rate_hz` (default `10`), so one tick is `100 ms`.
 - The Redis sink publishes with one `TS.MADD` per tick and includes every configured metric key in that write.
-- Some sensors run every N ticks, so a metric may be published every tick while the value itself only changes when its source sensor runs.
+- Some sensors run every `N` ticks, so a metric can be published every tick while its value only changes when that sensor runs.
 
 ### Default timing at `tick_rate_hz: 10`
 
 - `1 tick` = `100 ms`
 - `N ticks` = `N * 100 ms`
 
-## Raw metrics
+## Prefix and key format
 
-All keys use the configured prefix (default `hw-agent`) and are written as:
+All keys use the configured Redis prefix (default `edge:node`) and are written as:
 
 - `<prefix>:raw:<metric>`
+- `<prefix>:derived:<metric>`
+- `<prefix>:risk:<metric>`
+- `<prefix>:agent:<metric>` (when health publishing is enabled)
+
+## Raw metrics
 
 | Redis key suffix | Published every | Source refresh cadence | Notes |
 | --- | --- | --- | --- |
@@ -31,7 +38,7 @@ All keys use the configured prefix (default `hw-agent`) and are written as:
 | `raw:memory` | every tick | every 5 ticks (`500 ms`) | Dirty + writeback pressure. |
 | `raw:thermal` | every tick | every 9 ticks (`900 ms`) and every 11 ticks (`1100 ms`) | Thermal headroom (`ThermalSensor`) can be overwritten by `CpuFreqSensor` at its cadence. |
 | `raw:cpufreq` | every tick | every 11 ticks (`1100 ms`) | CPU frequency pressure ratio. |
-| `raw:cpu_throttle_ratio` | every tick | every 10 ticks (`1000 ms`) | CPU thermal throttle ratio [0,1]. |
+| `raw:cpu_throttle_ratio` | every tick | every 10 ticks (`1000 ms`) | CPU thermal throttle ratio `[0,1]`. |
 | `raw:disk` | every tick | every 6 ticks (`600 ms`) | `/proc/diskstats` weighted I/O wait estimate. |
 | `raw:network` | every tick | every 7 ticks (`700 ms`) | Interface packet drop ratio. |
 | `raw:gpu_util` | every tick | every 8 ticks (`800 ms`) and every 12 ticks (`1200 ms`) | Updated by both `TegraStatsSensor` and NVML GPU sensor (when available). |
@@ -45,8 +52,7 @@ All keys use the configured prefix (default `hw-agent`) and are written as:
 
 ## Derived metrics
 
-- `<prefix>:derived:<metric>`
-- Computed every tick from the current frame state (which may include raw values last refreshed on slower sensor cadences).
+Derived metrics are computed every tick from current frame state (which can include raw values last refreshed on slower cadences).
 
 | Redis key suffix | Published every | Computed every |
 | --- | --- | --- |
@@ -59,8 +65,7 @@ All keys use the configured prefix (default `hw-agent`) and are written as:
 
 ## Risk metrics
 
-- `<prefix>:risk:<metric>`
-- Computed every tick after derived metrics.
+Risk metrics are computed every tick after derived metrics.
 
 | Redis key suffix | Published every | Computed every | Meaning |
 | --- | --- | --- | --- |
