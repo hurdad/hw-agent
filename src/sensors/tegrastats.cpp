@@ -39,6 +39,28 @@ int parse_int_or_zero(const std::string& value) noexcept {
   }
   return parsed;
 }
+
+void terminate_child_process(const pid_t child_pid) noexcept {
+  if (child_pid <= 0) {
+    return;
+  }
+
+  kill(child_pid, SIGTERM);
+
+  constexpr int kTerminationPollCount = 20;
+  constexpr useconds_t kTerminationPollSleepUs = 10'000;
+  for (int attempt = 0; attempt < kTerminationPollCount; ++attempt) {
+    int status = 0;
+    const pid_t wait_result = waitpid(child_pid, &status, WNOHANG);
+    if (wait_result == child_pid || wait_result < 0) {
+      return;
+    }
+    usleep(kTerminationPollSleepUs);
+  }
+
+  kill(child_pid, SIGKILL);
+  waitpid(child_pid, nullptr, 0);
+}
 }  // namespace
 
 TegraStatsSensor::TegraStatsSensor(const std::uint32_t interval_ms) noexcept {
@@ -144,8 +166,7 @@ bool TegraStatsSensor::launch(const std::uint32_t interval_ms) noexcept {
   const int flags = fcntl(pipe_fds[0], F_GETFL, 0);
   if (flags < 0 || fcntl(pipe_fds[0], F_SETFL, flags | O_NONBLOCK) != 0) {
     close(pipe_fds[0]);
-    kill(pid, SIGTERM);
-    waitpid(pid, nullptr, 0);
+    terminate_child_process(pid);
     return false;
   }
 
@@ -161,8 +182,7 @@ void TegraStatsSensor::disable() noexcept {
   }
 
   if (child_pid_ > 0) {
-    kill(child_pid_, SIGTERM);
-    waitpid(child_pid_, nullptr, 0);
+    terminate_child_process(static_cast<pid_t>(child_pid_));
     child_pid_ = -1;
   }
 
