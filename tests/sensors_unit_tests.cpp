@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cstdio>
+#include <cstdint>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -15,6 +16,7 @@
 #include "sensors/disk.hpp"
 #include "sensors/power.hpp"
 #include "sensors/psi.hpp"
+#include "sensors/softirqs.hpp"
 #include "sensors/thermal.hpp"
 
 using hw_agent::model::signal_frame;
@@ -23,6 +25,7 @@ using hw_agent::sensors::CpuSensor;
 using hw_agent::sensors::DiskSensor;
 using hw_agent::sensors::PowerSensor;
 using hw_agent::sensors::PsiSensor;
+using hw_agent::sensors::SoftirqsSensor;
 using hw_agent::sensors::ThermalSensor;
 
 namespace {
@@ -266,6 +269,84 @@ int test_cpufreq_sensor_with_injected_scaling_cur_freq_files() {
   return 0;
 }
 
+
+std::string build_softirqs_snapshot(const std::vector<std::uint64_t>& hi_values,
+                                    const std::vector<std::uint64_t>& timer_values) {
+  std::string snapshot = "                    ";
+  for (std::size_t cpu = 0; cpu < hi_values.size(); ++cpu) {
+    snapshot += "CPU" + std::to_string(cpu);
+    if (cpu + 1 < hi_values.size()) {
+      snapshot += "       ";
+    }
+  }
+  snapshot += "\n";
+
+  snapshot += "HI:";
+  for (const std::uint64_t value : hi_values) {
+    snapshot += " " + std::to_string(value);
+  }
+  snapshot += "\n";
+
+  snapshot += "TIMER:";
+  for (const std::uint64_t value : timer_values) {
+    snapshot += " " + std::to_string(value);
+  }
+  snapshot += "\n";
+
+  return snapshot;
+}
+
+int test_softirqs_sensor_handles_large_proc_softirqs_snapshots() {
+  constexpr std::size_t kCpuCount = 512;
+
+  std::vector<std::uint64_t> hi_values(kCpuCount, 0);
+  std::vector<std::uint64_t> timer_values(kCpuCount, 0);
+
+  std::FILE* softirqs = std::tmpfile();
+  if (!write_temp_file(softirqs, build_softirqs_snapshot(hi_values, timer_values))) {
+    return fail("test_softirqs_sensor_handles_large_proc_softirqs_snapshots",
+                "failed writing first softirqs snapshot");
+  }
+
+  SoftirqsSensor sensor(softirqs, false);
+  signal_frame frame{};
+  if (!sensor.sample(frame) || !almost_equal(frame.softirqs, 0.0F)) {
+    return fail("test_softirqs_sensor_handles_large_proc_softirqs_snapshots",
+                "first sample should initialize baseline");
+  }
+
+  for (std::size_t cpu = 0; cpu < 8; ++cpu) {
+    hi_values[cpu] = 1;
+    timer_values[cpu] = 1;
+  }
+  if (!write_temp_file(softirqs, build_softirqs_snapshot(hi_values, timer_values))) {
+    return fail("test_softirqs_sensor_handles_large_proc_softirqs_snapshots",
+                "failed writing second softirqs snapshot");
+  }
+
+  if (!sensor.sample(frame) || !almost_equal(frame.softirqs, 0.0F)) {
+    return fail("test_softirqs_sensor_handles_large_proc_softirqs_snapshots",
+                "second sample should establish baseline delta");
+  }
+
+  for (std::size_t cpu = kCpuCount - 8; cpu < kCpuCount; ++cpu) {
+    hi_values[cpu] = 101;
+    timer_values[cpu] = 101;
+  }
+  if (!write_temp_file(softirqs, build_softirqs_snapshot(hi_values, timer_values))) {
+    return fail("test_softirqs_sensor_handles_large_proc_softirqs_snapshots",
+                "failed writing third softirqs snapshot");
+  }
+
+  if (!sensor.sample(frame) || !almost_equal(frame.softirqs, 1.0F)) {
+    return fail("test_softirqs_sensor_handles_large_proc_softirqs_snapshots",
+                "tail CPU deltas should be parsed from large snapshots");
+  }
+
+  std::fclose(softirqs);
+  return 0;
+}
+
 int test_psi_sensor_with_injected_pressure_files() {
   std::FILE* cpu = std::tmpfile();
   std::FILE* memory = std::tmpfile();
@@ -316,6 +397,9 @@ int main() {
     return rc;
   }
   if (int rc = test_cpufreq_sensor_with_injected_scaling_cur_freq_files(); rc != 0) {
+    return rc;
+  }
+  if (int rc = test_softirqs_sensor_handles_large_proc_softirqs_snapshots(); rc != 0) {
     return rc;
   }
   if (int rc = test_psi_sensor_with_injected_pressure_files(); rc != 0) {

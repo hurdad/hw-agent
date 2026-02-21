@@ -129,6 +129,7 @@ add_executable(hw_agent_sensors_unit_tests
   src/sensors/power.cpp
   src/sensors/cpufreq.cpp
   src/sensors/psi.cpp
+  src/sensors/softirqs.cpp
 )
 
 target_include_directories(hw_agent_sensors_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
