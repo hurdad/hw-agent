@@ -32,7 +32,7 @@ class DashboardApp(App[None]):
         state = to_dashboard_state(info)
         self.query_one("#dashboard", Static).update(format_dashboard(state))
 
-    def _collect(self) -> dict[str, int | float]:
+    def _collect(self) -> dict[str, object]:
         client = make_client()
         return collect_info(client)
 

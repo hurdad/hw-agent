@@ -17,7 +17,7 @@ Set `REDIS_URL` in your environment (defaults to `redis://localhost:6379/0`).
 ## MVP Scope
 
 - Single dashboard screen.
-- Core metrics: memory used, ops/sec, connected clients, hit rate.
+- Summary metrics: memory used, ops/sec, connected clients, hit rate, plus a full sorted dump of all Redis INFO fields.
 - Redis INFO parsing and derived metrics tested with fixtures.
 
 ## Keybinding
