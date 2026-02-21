@@ -72,8 +72,12 @@ bool RedisTsSink::reconnect() {
   timeout.tv_sec = static_cast<time_t>(options_.connect_timeout_ms / 1000);
   timeout.tv_usec = static_cast<suseconds_t>((options_.connect_timeout_ms % 1000) * 1000);
 
-  redisContext* raw =
-      redisConnectWithTimeout(options_.host.c_str(), static_cast<int>(options_.port), timeout);
+  redisContext* raw = nullptr;
+  if (!options_.unix_socket.empty()) {
+    raw = redisConnectUnixWithTimeout(options_.unix_socket.c_str(), timeout);
+  } else {
+    raw = redisConnectWithTimeout(options_.host.c_str(), static_cast<int>(options_.port), timeout);
+  }
   if (raw == nullptr || raw->err != REDIS_OK) {
     if (raw != nullptr) {
       std::cerr << "[redis] connect failed: " << raw->errstr << '\n';

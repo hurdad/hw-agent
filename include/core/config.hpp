@@ -10,6 +10,7 @@ namespace hw_agent::core {
 struct RedisConfig {
   std::string host{"127.0.0.1"};
   std::uint16_t port{6379};
+  std::string unix_socket{};
   bool enabled{false};
 };
 

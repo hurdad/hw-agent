@@ -64,8 +64,23 @@ void apply_key_value(AgentConfig& config, const std::string& key, const std::str
   }
 
   if (key == "redis.address") {
-    const auto split = value.find(':');
     config.redis.enabled = !value.empty();
+    if (value.rfind("unix://", 0) == 0) {
+      config.redis.unix_socket = value.substr(std::string("unix://").size());
+      config.redis.host.clear();
+      config.redis.port = 0;
+      return;
+    }
+
+    if (!value.empty() && value.front() == '/') {
+      config.redis.unix_socket = value;
+      config.redis.host.clear();
+      config.redis.port = 0;
+      return;
+    }
+
+    config.redis.unix_socket.clear();
+    const auto split = value.find(':');
     if (split == std::string::npos) {
       config.redis.host = value;
       return;

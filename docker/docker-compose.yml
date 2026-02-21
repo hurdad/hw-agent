@@ -5,7 +5,17 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
-    command: ["redis-stack-server", "--dir", "/data", "--appendonly", "yes"]
+      - redis-socket:/var/run/redis
+    command:
+      - redis-stack-server
+      - --dir
+      - /data
+      - --appendonly
+      - "yes"
+      - --unixsocket
+      - /var/run/redis/redis.sock
+      - --unixsocketperm
+      - "777"
 
   grafana:
     image: grafana/grafana:latest
@@ -27,18 +37,20 @@ services:
       dockerfile: docker/Dockerfile
     pid: host
     environment:
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      REDIS_ADDRESS: ${REDIS_ADDRESS:-unix:///var/run/redis/redis.sock}
       AGENT_CONFIG: ${AGENT_CONFIG:-agent.yaml}
+    volumes:
+      - redis-socket:/var/run/redis
     command:
       - /bin/sh
       - -c
       - |
         cp "/app/configs/$${AGENT_CONFIG}" /tmp/agent.yaml
-        sed -i "s|^  address: .*|  address: $${REDIS_HOST}:$${REDIS_PORT}|" /tmp/agent.yaml
+        sed -i "s|^  address: .*|  address: $${REDIS_ADDRESS}|" /tmp/agent.yaml
         while true; do /usr/local/bin/hw_agent /tmp/agent.yaml; sleep 1; done
     depends_on:
       - redis
 
 volumes:
   redis-data:
+  redis-socket:
