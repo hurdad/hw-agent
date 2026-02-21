@@ -35,6 +35,9 @@ void Agent::collect_sensors(AgentStats& stats) {
   cpu_sensor_.sample(frame_);
   interrupts_sensor_.sample(frame_);
   softirqs_sensor_.sample(frame_);
+  memory_sensor_.sample(frame_);
+  disk_sensor_.sample(frame_);
+  network_sensor_.sample(frame_);
   thermal_sensor_.sample(frame_);
   power_sensor_.sample(frame_);
 
@@ -43,6 +46,12 @@ void Agent::collect_sensors(AgentStats& stats) {
 
 void Agent::compute_derived(AgentStats& stats) {
   ++stats.derived_cycles;
+  scheduler_pressure_.sample(frame_);
+  memory_pressure_.sample(frame_);
+  io_pressure_.sample(frame_);
+  thermal_pressure_.sample(frame_);
+  power_pressure_.sample(frame_);
+  latency_jitter_.sample(frame_);
   (void)sampler_.should_sample_every(5);
 }
 

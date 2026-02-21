@@ -4,9 +4,18 @@
 #include <cstddef>
 
 #include "core/sampler.hpp"
+#include "derived/io_pressure.hpp"
+#include "derived/latency_jitter.hpp"
+#include "derived/memory_pressure.hpp"
+#include "derived/power_pressure.hpp"
+#include "derived/scheduler_pressure.hpp"
+#include "derived/thermal_pressure.hpp"
 #include "model/signal_frame.hpp"
 #include "sensors/cpu.hpp"
+#include "sensors/disk.hpp"
 #include "sensors/interrupts.hpp"
+#include "sensors/memory.hpp"
+#include "sensors/network.hpp"
 #include "sensors/power.hpp"
 #include "sensors/psi.hpp"
 #include "sensors/softirqs.hpp"
@@ -42,8 +51,19 @@ class Agent {
   sensors::CpuSensor cpu_sensor_{};
   sensors::InterruptsSensor interrupts_sensor_{};
   sensors::SoftirqsSensor softirqs_sensor_{};
+  sensors::MemorySensor memory_sensor_{};
+  sensors::DiskSensor disk_sensor_{};
+  sensors::NetworkSensor network_sensor_{};
   sensors::ThermalSensor thermal_sensor_{};
   sensors::PowerSensor power_sensor_{};
+
+  derived::SchedulerPressure scheduler_pressure_{};
+  derived::MemoryPressure memory_pressure_{};
+  derived::IoPressure io_pressure_{};
+  derived::ThermalPressure thermal_pressure_{};
+  derived::PowerPressure power_pressure_{};
+  derived::LatencyJitter latency_jitter_{};
+
   sinks::StdoutDebugSink stdout_sink_{};
 };
 
