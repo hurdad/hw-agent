@@ -97,8 +97,9 @@ void NetworkSensor::sample(model::signal_frame& frame) noexcept {
     has_prev_ = true;
     raw_.packet_drop_rate = 0.0F;
   } else {
-    const std::uint64_t delta_packets = total_packets - prev_total_packets_;
-    const std::uint64_t delta_drops = total_drops - prev_total_drops_;
+    const std::uint64_t delta_packets =
+        total_packets >= prev_total_packets_ ? (total_packets - prev_total_packets_) : 0;
+    const std::uint64_t delta_drops = total_drops >= prev_total_drops_ ? (total_drops - prev_total_drops_) : 0;
     prev_total_packets_ = total_packets;
     prev_total_drops_ = total_drops;
 
