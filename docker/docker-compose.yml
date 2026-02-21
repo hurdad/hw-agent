@@ -1,0 +1,50 @@
+services:
+  redis:
+    image: redis/redis-stack-server:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+      - ./init-redis.sh:/usr/local/bin/init-redis.sh:ro
+    command:
+      - /bin/sh
+      - -c
+      - |
+        redis-stack-server --dir /data --appendonly yes &
+        redis_pid=$$!
+        /usr/local/bin/init-redis.sh
+        wait $$redis_pid
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_INSTALL_PLUGINS: redis-datasource
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - redis
+
+  hw_agent:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cp /app/configs/agent.yaml /tmp/agent.yaml
+        sed -i "s|^  address: .*|  address: $${REDIS_HOST}:$${REDIS_PORT}|" /tmp/agent.yaml
+        while true; do /usr/local/bin/hw_agent /tmp/agent.yaml; sleep 1; done
+    depends_on:
+      - redis
+
+volumes:
+  redis-data:
