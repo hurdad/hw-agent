@@ -1,7 +1,7 @@
 #pragma once
 
+#include <cstdio>
 #include <cstdint>
-#include <string>
 #include <vector>
 
 #include "model/signal_frame.hpp"
@@ -19,18 +19,27 @@ class NetworkSensor {
   };
 
   NetworkSensor();
-  ~NetworkSensor() = default;
+  ~NetworkSensor();
 
   NetworkSensor(const NetworkSensor&) = delete;
   NetworkSensor& operator=(const NetworkSensor&) = delete;
+  NetworkSensor(NetworkSensor&&) = delete;
+  NetworkSensor& operator=(NetworkSensor&&) = delete;
 
   void sample(model::signal_frame& frame) noexcept;
   const RawFields& raw() const noexcept;
 
  private:
-  static std::uint64_t read_u64_file(const std::string& path) noexcept;
+  struct InterfaceSource {
+    std::FILE* rx_packets_file{nullptr};
+    std::FILE* tx_packets_file{nullptr};
+    std::FILE* rx_dropped_file{nullptr};
+    std::FILE* tx_dropped_file{nullptr};
+  };
 
-  std::vector<std::string> interfaces_;
+  static std::uint64_t read_u64_file(std::FILE* file) noexcept;
+
+  std::vector<InterfaceSource> interfaces_{};
   RawFields raw_{};
   std::uint64_t prev_total_packets_{0};
   std::uint64_t prev_total_drops_{0};

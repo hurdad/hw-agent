@@ -25,14 +25,28 @@ ThermalSensor::ThermalSensor(const float throttle_temp_c) {
     }
 
     const std::filesystem::path zone_path = entry.path();
-    zone_temp_paths_.push_back((zone_path / "temp").string());
 
     std::ifstream type_file(zone_path / "type");
     std::string zone_name = name;
     if (type_file.is_open()) {
       std::getline(type_file, zone_name);
     }
-    zone_names_.push_back(zone_name);
+
+    ZoneSource source{};
+    source.name = zone_name;
+    source.temp_path = (zone_path / "temp").string();
+    source.file = std::fopen(source.temp_path.c_str(), "r");
+
+    zones_.push_back(source);
+  }
+}
+
+ThermalSensor::~ThermalSensor() {
+  for (ZoneSource& zone : zones_) {
+    if (zone.file != nullptr) {
+      std::fclose(zone.file);
+      zone.file = nullptr;
+    }
   }
 }
 
@@ -43,8 +57,16 @@ void ThermalSensor::sample(model::signal_frame& frame) noexcept {
   float max_temp_c = -std::numeric_limits<float>::infinity();
   std::size_t max_index = 0;
 
-  for (std::size_t i = 0; i < zone_temp_paths_.size(); ++i) {
-    const float zone_temp_c = read_temp_c(zone_temp_paths_[i]);
+  for (std::size_t i = 0; i < zones_.size(); ++i) {
+    ZoneSource& zone = zones_[i];
+    if (zone.file == nullptr) {
+      zone.file = std::fopen(zone.temp_path.c_str(), "r");
+      if (zone.file == nullptr) {
+        continue;
+      }
+    }
+
+    const float zone_temp_c = read_temp_c(zone.file);
     if (zone_temp_c > max_temp_c) {
       max_temp_c = zone_temp_c;
       max_index = i;
@@ -53,7 +75,7 @@ void ThermalSensor::sample(model::signal_frame& frame) noexcept {
 
   if (std::isfinite(max_temp_c)) {
     raw_.hottest_temp_c = max_temp_c;
-    raw_.hottest_zone = zone_names_[max_index];
+    raw_.hottest_zone = zones_[max_index].name;
   }
 
   raw_.headroom_c = raw_.throttle_temp_c - raw_.hottest_temp_c;
@@ -66,15 +88,18 @@ void ThermalSensor::set_throttle_temp_c(const float throttle_temp_c) noexcept {
 
 const ThermalSensor::RawFields& ThermalSensor::raw() const noexcept { return raw_; }
 
-float ThermalSensor::read_temp_c(const std::string& path) noexcept {
-  std::ifstream input(path);
-  if (!input.is_open()) {
+float ThermalSensor::read_temp_c(std::FILE* file) noexcept {
+  if (file == nullptr) {
+    return -std::numeric_limits<float>::infinity();
+  }
+
+  if (std::fseek(file, 0L, SEEK_SET) != 0) {
     return -std::numeric_limits<float>::infinity();
   }
 
   long long raw_temp = 0;
-  input >> raw_temp;
-  if (!input.good() && !input.eof()) {
+  if (std::fscanf(file, "%lld", &raw_temp) != 1) {
+    std::clearerr(file);
     return -std::numeric_limits<float>::infinity();
   }
 

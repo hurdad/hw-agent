@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -17,20 +18,27 @@ class ThermalSensor {
   };
 
   explicit ThermalSensor(float throttle_temp_c = 85.0F);
-  ~ThermalSensor() = default;
+  ~ThermalSensor();
 
   ThermalSensor(const ThermalSensor&) = delete;
   ThermalSensor& operator=(const ThermalSensor&) = delete;
+  ThermalSensor(ThermalSensor&&) = delete;
+  ThermalSensor& operator=(ThermalSensor&&) = delete;
 
   void sample(model::signal_frame& frame) noexcept;
   void set_throttle_temp_c(float throttle_temp_c) noexcept;
   const RawFields& raw() const noexcept;
 
  private:
-  static float read_temp_c(const std::string& path) noexcept;
+  struct ZoneSource {
+    std::string name{};
+    std::string temp_path{};
+    std::FILE* file{nullptr};
+  };
 
-  std::vector<std::string> zone_temp_paths_{};
-  std::vector<std::string> zone_names_{};
+  static float read_temp_c(std::FILE* file) noexcept;
+
+  std::vector<ZoneSource> zones_{};
   RawFields raw_{};
 };
 
