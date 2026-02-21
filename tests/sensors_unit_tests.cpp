@@ -97,6 +97,24 @@ int test_disk_sensor_with_injected_diskstats() {
     return fail("test_disk_sensor_with_injected_diskstats", "disk wait estimate mismatch");
   }
 
+  if (!write_temp_file(
+          diskstats,
+          "259 0 nvme0n1 100 0 0 0 200 0 0 0 1 1000 3000\n259 1 nvme0n1p1 5 0 0 0 10 0 0 0 0 50 75\n")) {
+    return fail("test_disk_sensor_with_injected_diskstats", "failed writing third diskstats snapshot");
+  }
+
+  if (!sensor.sample(frame) || !almost_equal(frame.disk, 0.0F)) {
+    return fail("test_disk_sensor_with_injected_diskstats", "nvme baseline sample should initialize");
+  }
+
+  if (!write_temp_file(diskstats, "259 0 nvme0n1 110 0 0 0 220 0 0 0 1 1200 3600\n")) {
+    return fail("test_disk_sensor_with_injected_diskstats", "failed writing fourth diskstats snapshot");
+  }
+
+  if (!sensor.sample(frame) || !almost_equal(frame.disk, 20.0F)) {
+    return fail("test_disk_sensor_with_injected_diskstats", "nvme disk wait estimate mismatch");
+  }
+
   std::fclose(diskstats);
   return 0;
 }
