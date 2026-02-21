@@ -107,6 +107,7 @@ bool Agent::sensor_enabled(const AgentConfig& config, const std::string& name) c
 void Agent::collect_sensors(AgentStats& stats) {
   ++stats.sensor_cycles;
   frame_.timestamp = timestamp_now_ns();
+  frame_.agent.sensor_failures = 0;
 
   for (auto& sensor : sensor_registry_) {
     if (!sensor.enabled) {
@@ -140,6 +141,8 @@ void Agent::compute_risk(AgentStats& stats) {
 
 void Agent::publish_sinks(AgentStats& stats) {
   ++stats.sink_cycles;
+  frame_.agent.redis_errors = 0;
+
   if (publish_stdout_) {
     stdout_sink_.publish(frame_);
   }
