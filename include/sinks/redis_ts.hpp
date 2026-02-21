@@ -15,8 +15,9 @@ struct RedisTsOptions {
   std::uint16_t port{6379};
   std::string password{};
   int db{0};
-  std::string key_prefix{"hw-agent"};
+  std::string key_prefix{"edge:node"};
   std::uint32_t connect_timeout_ms{1000};
+  bool publish_health{true};
 };
 
 class RedisTsSink {
@@ -29,7 +30,7 @@ class RedisTsSink {
   RedisTsSink(RedisTsSink&&) noexcept;
   RedisTsSink& operator=(RedisTsSink&&) noexcept;
 
-  bool publish(const model::signal_frame& frame);
+  bool publish(model::signal_frame& frame);
 
  private:
   struct ContextDeleter {
@@ -40,7 +41,7 @@ class RedisTsSink {
   bool reconnect();
   bool authenticate();
   bool select_db();
-  bool publish_impl(const model::signal_frame& frame);
+  bool publish_impl(model::signal_frame& frame);
 
   RedisTsOptions options_;
   std::unique_ptr<redisContext, ContextDeleter> context_;

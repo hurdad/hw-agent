@@ -1,5 +1,6 @@
 #include "sinks/redis_ts.hpp"
 
+#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <string>
@@ -94,7 +95,7 @@ bool RedisTsSink::select_db() {
   return ok;
 }
 
-bool RedisTsSink::publish(const model::signal_frame& frame) {
+bool RedisTsSink::publish(model::signal_frame& frame) {
   if (!ensure_connected()) {
     return false;
   }
@@ -109,10 +110,10 @@ bool RedisTsSink::publish(const model::signal_frame& frame) {
   return publish_impl(frame);
 }
 
-bool RedisTsSink::publish_impl(const model::signal_frame& frame) {
+bool RedisTsSink::publish_impl(model::signal_frame& frame) {
   const std::uint64_t timestamp_ms = frame.timestamp / 1'000'000ULL;
 
-  const std::vector<Metric> metrics = {
+  std::vector<Metric> metrics = {
       {"raw:psi", sanitize_value(frame.psi)},
       {"raw:cpu", sanitize_value(frame.cpu)},
       {"raw:irq", sanitize_value(frame.irq)},
@@ -132,6 +133,15 @@ bool RedisTsSink::publish_impl(const model::signal_frame& frame) {
       {"risk:state", static_cast<double>(static_cast<std::uint8_t>(frame.state))},
   };
 
+  if (options_.publish_health) {
+    metrics.push_back({"agent:heartbeat", static_cast<double>(frame.agent.heartbeat_ms)});
+    metrics.push_back({"agent:loop_jitter", sanitize_value(frame.agent.loop_jitter_ms)});
+    metrics.push_back({"agent:compute_time", sanitize_value(frame.agent.compute_time_ms)});
+    metrics.push_back({"agent:redis_latency", sanitize_value(frame.agent.redis_latency_ms)});
+    metrics.push_back({"agent:sensor_failures", static_cast<double>(frame.agent.sensor_failures)});
+    metrics.push_back({"agent:missed_cycles", static_cast<double>(frame.agent.missed_cycles)});
+  }
+
   std::vector<std::string> args;
   args.reserve(1 + (metrics.size() * 3));
   args.emplace_back("TS.MADD");
@@ -149,8 +159,12 @@ bool RedisTsSink::publish_impl(const model::signal_frame& frame) {
     argv_len.push_back(arg.size());
   }
 
+  const auto publish_start = std::chrono::steady_clock::now();
   redisReply* reply = static_cast<redisReply*>(
       redisCommandArgv(context_.get(), static_cast<int>(argv.size()), argv.data(), argv_len.data()));
+  const auto publish_end = std::chrono::steady_clock::now();
+  frame.agent.redis_latency_ms =
+      std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(publish_end - publish_start).count();
   if (reply == nullptr) {
     return false;
   }
