@@ -36,9 +36,15 @@ bool parse_bool(const std::string& value) {
 void apply_key_value(AgentConfig& config, const std::string& key, const std::string& value) {
   if (key == "tick_rate_hz") {
     const auto hz = std::stoi(value);
-    if (hz > 0) {
-      config.tick_interval = std::chrono::milliseconds(1000 / hz);
+    if (hz <= 0) {
+      throw std::runtime_error("tick_rate_hz must be greater than 0");
     }
+
+    if (hz > 1000) {
+      throw std::runtime_error("tick_rate_hz must be less than or equal to 1000");
+    }
+
+    config.tick_interval = std::chrono::milliseconds(1000 / hz);
     return;
   }
 

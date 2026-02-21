@@ -82,6 +82,7 @@ enable_testing()
 
 add_executable(hw_agent_risk_unit_tests
   tests/risk_unit_tests.cpp
+  src/core/config.cpp
   src/risk/realtime_risk.cpp
   src/risk/saturation_risk.cpp
   src/risk/system_state.cpp
