@@ -17,6 +17,11 @@ Agent::Agent(AgentConfig config)
     redis_sink_ = std::make_unique<sinks::RedisTsSink>(options);
   }
 
+  gpu_sensor_ = sensors::gpu::make_nvml_sensor();
+  if (gpu_sensor_ == nullptr || !gpu_sensor_->available()) {
+    gpu_sensor_ = sensors::gpu::make_none_sensor();
+  }
+
   register_sensors(config);
 }
 
@@ -61,6 +66,9 @@ void Agent::register_sensors(const AgentConfig& config) {
   sensor_registry_.push_back({"thermal", 9, sensor_enabled(config, "thermal"), [this](model::signal_frame& frame) { thermal_sensor_.sample(frame); return true; }});
   sensor_registry_.push_back({"power", 10, sensor_enabled(config, "power"), [this](model::signal_frame& frame) { power_sensor_.sample(frame); return true; }});
   sensor_registry_.push_back({"cpufreq", 11, sensor_enabled(config, "cpufreq"), [this](model::signal_frame& frame) { cpufreq_sensor_.sample(frame); return true; }});
+  sensor_registry_.push_back({"gpu", 12, sensor_enabled(config, "gpu"), [this](model::signal_frame& frame) {
+    return gpu_sensor_ != nullptr ? gpu_sensor_->collect(frame) : false;
+  }});
 }
 
 bool Agent::sensor_enabled(const AgentConfig& config, const std::string& name) const {

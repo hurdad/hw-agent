@@ -35,6 +35,13 @@ struct signal_frame {
     float power;
     float disk;
     float network;
+    float gpu_util;
+    float gpu_mem_util;
+    float gpu_mem_free;
+    float gpu_temp;
+    float gpu_clock_ratio;
+    float gpu_power_ratio;
+    float gpu_throttle;
 
     // Derived signals.
     float scheduler_pressure;
