@@ -56,3 +56,17 @@ add_executable(hw_agent
 
 target_include_directories(hw_agent PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(hw_agent PRIVATE yaml-cpp hiredis::hiredis)
+
+
+enable_testing()
+
+add_executable(hw_agent_risk_unit_tests
+  tests/risk_unit_tests.cpp
+  src/risk/realtime_risk.cpp
+  src/risk/saturation_risk.cpp
+  src/risk/system_state.cpp
+)
+
+target_include_directories(hw_agent_risk_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_test(NAME hw_agent_risk_unit_tests COMMAND hw_agent_risk_unit_tests)
