@@ -1,6 +1,8 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -166,6 +168,44 @@ int test_thermal_sensor_with_injected_zone_files() {
   return 0;
 }
 
+int test_thermal_sensor_with_lazy_opened_zone_does_not_keep_file_when_not_owned() {
+  const auto thermal_root = std::filesystem::temp_directory_path() / "hw_agent_thermal_sensor_lazy_open";
+  std::filesystem::remove_all(thermal_root);
+  std::filesystem::create_directories(thermal_root);
+
+  const auto temp_path = thermal_root / "temp";
+  {
+    std::ofstream out(temp_path);
+    out << "72000\n";
+  }
+
+  std::vector<ThermalSensor::ZoneSource> zones{{"gpu", temp_path.string(), nullptr}};
+  ThermalSensor sensor(85.0F, std::move(zones), false);
+  signal_frame frame{};
+  const bool sample_ok = sensor.sample(frame);
+
+  if (!sample_ok || !almost_equal(frame.thermal, 13.0F) || sensor.raw().hottest_zone != "gpu") {
+    std::filesystem::remove_all(thermal_root);
+    return fail("test_thermal_sensor_with_lazy_opened_zone_does_not_keep_file_when_not_owned",
+                "sample result mismatch for lazily opened zone");
+  }
+
+  if (!sensor.sample(frame)) {
+    std::filesystem::remove_all(thermal_root);
+    return fail("test_thermal_sensor_with_lazy_opened_zone_does_not_keep_file_when_not_owned",
+                "repeat sample should continue to succeed");
+  }
+
+  if (sensor.raw().hottest_zone != "gpu") {
+    std::filesystem::remove_all(thermal_root);
+    return fail("test_thermal_sensor_with_lazy_opened_zone_does_not_keep_file_when_not_owned",
+                "hottest zone should remain stable");
+  }
+
+  std::filesystem::remove_all(thermal_root);
+  return 0;
+}
+
 int test_power_sensor_with_injected_throttle_files() {
   std::FILE* core0 = std::tmpfile();
   std::FILE* pkg0 = std::tmpfile();
@@ -267,6 +307,9 @@ int main() {
     return rc;
   }
   if (int rc = test_thermal_sensor_with_injected_zone_files(); rc != 0) {
+    return rc;
+  }
+  if (int rc = test_thermal_sensor_with_lazy_opened_zone_does_not_keep_file_when_not_owned(); rc != 0) {
     return rc;
   }
   if (int rc = test_power_sensor_with_injected_throttle_files(); rc != 0) {
