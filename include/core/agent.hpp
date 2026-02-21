@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -67,6 +68,7 @@ class Agent {
   void update_agent_health(float actual_period_ms, float compute_time_ms);
 
   std::chrono::milliseconds tick_interval_{};
+  std::optional<std::chrono::steady_clock::time_point> previous_cycle_start_{};
   Sampler sampler_{};
   model::signal_frame frame_{};
   bool publish_health_{true};
