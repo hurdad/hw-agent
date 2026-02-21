@@ -10,62 +10,42 @@ constexpr const char* kCpuPath = "/sys/devices/system/cpu";
 }
 
 PowerSensor::PowerSensor() {
-  for (const auto& entry : std::filesystem::directory_iterator(kCpuPath)) {
-    if (!entry.is_directory()) {
-      continue;
-    }
-
-    const std::string name = entry.path().filename().string();
-    if (name.rfind("cpu", 0) != 0 || name.size() <= 3) {
-      continue;
-    }
-
-    bool is_cpu_dir = true;
-    for (std::size_t index = 3; index < name.size(); ++index) {
-      if (!std::isdigit(static_cast<unsigned char>(name[index]))) {
-        is_cpu_dir = false;
-        break;
-      }
-    }
-    if (!is_cpu_dir) {
-      continue;
-    }
-
-    const std::string base_path = entry.path().string() + "/thermal_throttle";
-
-    ThermalThrottleSource source{};
-    source.core_throttle_count_file = std::fopen((base_path + "/core_throttle_count").c_str(), "r");
-    source.package_throttle_count_file = std::fopen((base_path + "/package_throttle_count").c_str(), "r");
-
-    if (source.core_throttle_count_file == nullptr && source.package_throttle_count_file == nullptr) {
-      continue;
-    }
-
-    cores_.push_back(source);
   try {
-    if (!std::filesystem::exists(kCpuFreqPath)) {
-      return;
-    }
-
-    for (const auto& entry : std::filesystem::directory_iterator(kCpuFreqPath)) {
+    for (const auto& entry : std::filesystem::directory_iterator(kCpuPath)) {
       if (!entry.is_directory()) {
         continue;
       }
 
       const std::string name = entry.path().filename().string();
-      if (name.rfind("policy", 0) != 0) {
+      if (name.rfind("cpu", 0) != 0 || name.size() <= 3) {
         continue;
       }
 
-      const std::string base_path = entry.path().string();
+      bool is_cpu_dir = true;
+      for (std::size_t index = 3; index < name.size(); ++index) {
+        if (!std::isdigit(static_cast<unsigned char>(name[index]))) {
+          is_cpu_dir = false;
+          break;
+        }
+      }
+      if (!is_cpu_dir) {
+        continue;
+      }
 
-      PolicySource source{};
-      source.cur_freq_file = std::fopen((base_path + "/scaling_cur_freq").c_str(), "r");
-      source.max_freq_file = std::fopen((base_path + "/scaling_max_freq").c_str(), "r");
-      policies_.push_back(source);
+      const std::string base_path = entry.path().string() + "/thermal_throttle";
+
+      ThermalThrottleSource source{};
+      source.core_throttle_count_file = std::fopen((base_path + "/core_throttle_count").c_str(), "r");
+      source.package_throttle_count_file = std::fopen((base_path + "/package_throttle_count").c_str(), "r");
+
+      if (source.core_throttle_count_file == nullptr && source.package_throttle_count_file == nullptr) {
+        continue;
+      }
+
+      cores_.push_back(source);
     }
   } catch (const std::filesystem::filesystem_error&) {
-    policies_.clear();
+    cores_.clear();
   }
 }
 
