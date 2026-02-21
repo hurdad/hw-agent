@@ -25,11 +25,20 @@ All keys use the configured prefix (default `hw-agent`) and are written as:
 | `raw:psi` | every tick (`100 ms`) | every 1 tick (`100 ms`) | From PSI CPU avg10 (`/proc/pressure/cpu`). |
 | `raw:cpu` | every tick | every 2 ticks (`200 ms`) | Overwritten by `CpuSensor` every 2 ticks; initially seeded by PSI when that sensor runs. |
 | `raw:irq` | every tick | every 3 ticks (`300 ms`) | From `/proc/stat` interrupts delta rate. |
+| `raw:softirqs` | every tick | every 4 ticks (`400 ms`) | From `/proc/stat` softirq delta rate. |
 | `raw:memory` | every tick | every 5 ticks (`500 ms`) | Dirty + writeback pressure. |
 | `raw:thermal` | every tick | every 9 ticks (`900 ms`) and every 11 ticks (`1100 ms`) | Thermal headroom (`ThermalSensor`) can be overwritten by `CpuFreqSensor` at its cadence. |
+| `raw:cpufreq` | every tick | every 11 ticks (`1100 ms`) | CPU frequency pressure ratio. |
 | `raw:power` | every tick | every 10 ticks (`1000 ms`) | CPU policy throttle ratio. |
 | `raw:disk` | every tick | every 6 ticks (`600 ms`) | `/proc/diskstats` weighted I/O wait estimate. |
 | `raw:network` | every tick | every 7 ticks (`700 ms`) | Interface packet drop ratio. |
+| `raw:gpu_util` | every tick | every 8 ticks (`800 ms`) | GPU core utilization ratio. |
+| `raw:gpu_mem_util` | every tick | every 8 ticks (`800 ms`) | GPU memory utilization ratio. |
+| `raw:gpu_mem_free` | every tick | every 8 ticks (`800 ms`) | Free GPU memory ratio. |
+| `raw:gpu_temp` | every tick | every 8 ticks (`800 ms`) | GPU temperature pressure ratio. |
+| `raw:gpu_clock_ratio` | every tick | every 8 ticks (`800 ms`) | GPU clock headroom ratio. |
+| `raw:gpu_power_ratio` | every tick | every 8 ticks (`800 ms`) | GPU power headroom ratio. |
+| `raw:gpu_throttle` | every tick | every 8 ticks (`800 ms`) | GPU throttle/thermal-limited ratio. |
 
 ## Derived metrics
 

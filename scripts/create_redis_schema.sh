@@ -22,9 +22,28 @@ create_ts() {
     LABELS app hw-agent signal_group "$group" signal "$field" >/dev/null
 }
 
-raw_fields=(psi cpu irq memory thermal power disk network)
+raw_fields=(
+  psi
+  cpu
+  irq
+  softirqs
+  memory
+  thermal
+  cpufreq
+  power
+  disk
+  network
+  gpu_util
+  gpu_mem_util
+  gpu_mem_free
+  gpu_temp
+  gpu_clock_ratio
+  gpu_power_ratio
+  gpu_throttle
+)
 derived_fields=(scheduler_pressure memory_pressure io_pressure thermal_pressure power_pressure latency_jitter)
 risk_fields=(realtime_risk saturation_risk state)
+agent_fields=(heartbeat loop_jitter compute_time redis_latency sensor_failures missed_cycles)
 
 for field in "${raw_fields[@]}"; do
   create_ts "$KEY_PREFIX:raw:$field" "raw" "$field"
@@ -36,6 +55,10 @@ done
 
 for field in "${risk_fields[@]}"; do
   create_ts "$KEY_PREFIX:risk:$field" "risk" "$field"
+done
+
+for field in "${agent_fields[@]}"; do
+  create_ts "$KEY_PREFIX:agent:$field" "agent" "$field"
 done
 
 echo "RedisTimeSeries schema ensured for prefix '$KEY_PREFIX' on $REDIS_HOST:$REDIS_PORT db=$REDIS_DB"
