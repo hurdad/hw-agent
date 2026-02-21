@@ -28,7 +28,7 @@ class PsiSensor {
   float read_avg10(Source& source) noexcept;
   static float parse_avg10(const char* data, std::size_t size) noexcept;
 
-  std::array<Source, 3> sources_;
+  std::array<Source, 1> sources_;
 };
 
 }  // namespace hw_agent::sensors
