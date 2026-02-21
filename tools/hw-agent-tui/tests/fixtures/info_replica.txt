@@ -1,0 +1,10 @@
+# Stats
+instantaneous_ops_per_sec:20
+keyspace_hits:20
+keyspace_misses:5
+# Replication
+role:slave
+# Clients
+connected_clients:3
+# Memory
+used_memory:1048576

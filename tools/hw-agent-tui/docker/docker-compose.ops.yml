@@ -1,0 +1,10 @@
+services:
+  hw-agent-tui:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    environment:
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      REFRESH_INTERVAL: ${REFRESH_INTERVAL:-1.0}
+    stdin_open: true
+    tty: true
