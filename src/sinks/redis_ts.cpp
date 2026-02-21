@@ -1,5 +1,7 @@
 #include "sinks/redis_ts.hpp"
 
+#include "core/timestamp.hpp"
+
 #include <chrono>
 #include <cmath>
 #include <cstddef>
@@ -111,7 +113,7 @@ bool RedisTsSink::publish(model::signal_frame& frame) {
 }
 
 bool RedisTsSink::publish_impl(model::signal_frame& frame) {
-  const std::uint64_t timestamp_ms = frame.timestamp / 1'000'000ULL;
+  const std::uint64_t timestamp_ms = core::unix_timestamp_now_ns() / 1'000'000ULL;
 
   std::vector<Metric> metrics = {
       {"raw:psi", sanitize_value(frame.psi)},
