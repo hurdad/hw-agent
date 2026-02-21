@@ -1,6 +1,7 @@
 #include "core/agent.hpp"
 
 #include <cmath>
+#include <iostream>
 #include <thread>
 
 #include "core/timestamp.hpp"
@@ -18,9 +19,14 @@ Agent::Agent(AgentConfig config)
   }
 
   gpu_sensor_ = sensors::gpu::make_nvml_sensor();
-  if (gpu_sensor_ == nullptr || !gpu_sensor_->available()) {
+  if (gpu_sensor_ != nullptr && gpu_sensor_->available()) {
+    std::cerr << "[agent] detected NVML GPU sensor\n";
+  } else {
+    std::cerr << "[agent] NVML GPU sensor unavailable; falling back to none sensor\n";
     gpu_sensor_ = sensors::gpu::make_none_sensor();
   }
+
+  std::cerr << "[agent] tegrastats " << (tegrastats_sensor_.enabled() ? "detected" : "not detected") << '\n';
 
   register_sensors(config);
 }
