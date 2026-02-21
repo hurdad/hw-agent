@@ -149,7 +149,7 @@ void Agent::update_agent_health(const float actual_period_ms, const float comput
 
   frame_.agent.loop_jitter_ms = std::fabs(actual_period_ms - tick_ms);
   frame_.agent.compute_time_ms = compute_time_ms;
-  frame_.agent.heartbeat_ms = timestamp_now_ns() / 1'000'000ULL;
+  frame_.agent.heartbeat_ms = unix_timestamp_now_ns() / 1'000'000ULL;
   if (compute_time_ms > tick_ms) {
     ++frame_.agent.missed_cycles;
   }
