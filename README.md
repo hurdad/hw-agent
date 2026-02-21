@@ -104,6 +104,8 @@ cd docker
 docker compose up --build
 ```
 
+`hw_agent` is configured with `pid: host` in Compose so `/proc/*` sensors read host-kernel process/scheduler state instead of an isolated container PID namespace.
+
 Run with GPU support (NVIDIA):
 
 ```bash
