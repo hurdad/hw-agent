@@ -43,15 +43,11 @@ All keys use the configured Redis prefix (default `edge:node`) and are written a
 | `raw:network` | every tick | every 7 ticks (`700 ms`) | Interface packet drop ratio. |
 | `raw:nvml_gpu_util` | every tick | every 12 ticks (`1200 ms`) | NVML GPU utilization percentage (`[0,100]`). |
 | `raw:tegra_gpu_util` | every tick | every 8 ticks (`800 ms`) | Jetson GPU utilization from `tegrastats` (`GR3D_FREQ`/`GPU`). |
-| `raw:gpu_mem_util` | every tick | every 12 ticks (`1200 ms`) | GPU memory utilization percentage (`[0,100]`) from NVML backend metrics. |
 | `raw:tegra_emc_util` | every tick | every 8 ticks (`800 ms`) | Jetson EMC utilization from `tegrastats` (`EMC_FREQ`). |
-| `raw:gpu_mem_free` | every tick | every 12 ticks (`1200 ms`) | Free GPU memory in MiB from NVML backend metrics. |
 | `raw:nvml_gpu_temp` | every tick | every 12 ticks (`1200 ms`) | NVML-reported GPU temperature in Celsius. |
 | `raw:tegra_gpu_temp` | every tick | every 8 ticks (`800 ms`) | Jetson GPU temperature in Celsius from `tegrastats` (`GPU@...C`). |
-| `raw:gpu_clock_ratio` | every tick | every 12 ticks (`1200 ms`) | GPU clock headroom ratio from NVML. |
 | `raw:nvml_gpu_power_ratio` | every tick | every 12 ticks (`1200 ms`) | Normalized NVML GPU power ratio (`power_usage / power_limit`, `[0,1]`). |
 | `raw:tegra_gpu_power_mw` | every tick | every 8 ticks (`800 ms`) | Jetson total `VDD_*` rail power sum from `tegrastats`, in milliwatts. |
-| `raw:gpu_throttle` | every tick | every 12 ticks (`1200 ms`) | GPU throttle/thermal-limited ratio from NVML throttle reasons. |
 
 ## Derived metrics
 
