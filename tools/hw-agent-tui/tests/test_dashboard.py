@@ -19,3 +19,20 @@ def test_format_dashboard_unknown_metric_uses_unitless_marker() -> None:
     output = format_dashboard({"other": {"mystery_metric": 1.0}})
     assert "mystery_metric" in output
     assert "-" in output
+
+
+def test_format_dashboard_renamed_gpu_metrics_units() -> None:
+    output = format_dashboard(
+        {
+            "raw": {
+                "nvml_gpu_util": 82.0,
+                "tegra_emc_util": 49.0,
+                "nvml_gpu_temp": 70.0,
+                "tegra_gpu_power_mw": 12400.0,
+            }
+        }
+    )
+    assert "nvml_gpu_util" in output and "ratio" in output
+    assert "tegra_emc_util" in output and "ratio" in output
+    assert "nvml_gpu_temp" in output and "°C" in output
+    assert "tegra_gpu_power_mw" in output and "mW" in output

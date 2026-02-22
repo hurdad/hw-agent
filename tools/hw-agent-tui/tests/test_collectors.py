@@ -49,3 +49,25 @@ def test_group_hw_metrics_groups_by_signal_class() -> None:
         "raw": {"cpu": 0.21},
         "risk": {"state": 2.0},
     }
+
+
+def test_collect_hw_metrics_accepts_renamed_gpu_metric_keys() -> None:
+    class RenamedGpuRedis(FakeRedis):
+        def __init__(self) -> None:
+            super().__init__()
+            self._series.update(
+                {
+                    "edge:node:raw:nvml_gpu_util": [1000, "77.0"],
+                    "edge:node:raw:tegra_emc_util": [1000, "33.0"],
+                }
+            )
+
+        def scan_iter(self, match: str):
+            keys = list(super().scan_iter(match))
+            keys.extend(["edge:node:raw:nvml_gpu_util", "edge:node:raw:tegra_emc_util"])
+            return keys
+
+    client = RenamedGpuRedis()
+    metrics = collect_hw_metrics(client)  # type: ignore[arg-type]
+    assert metrics["edge:node:raw:nvml_gpu_util"] == 77.0
+    assert metrics["edge:node:raw:tegra_emc_util"] == 33.0
