@@ -135,3 +135,5 @@ add_executable(hw_agent_sensors_unit_tests
 target_include_directories(hw_agent_sensors_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_test(NAME hw_agent_sensors_unit_tests COMMAND hw_agent_sensors_unit_tests)
+
+add_subdirectory(tools/hw-agent-mcp)
