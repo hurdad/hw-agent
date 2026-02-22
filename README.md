@@ -156,16 +156,6 @@ cd docker
 AGENT_CONFIG=agent.cpu-discrete-gpu.yaml docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
 ```
 
-Open Grafana:
-
-```text
-http://localhost:3000
-user: admin
-pass: admin
-```
-
-You should immediately see the node stability dashboard.
-
 Run the TUI:
 
 ```bash
