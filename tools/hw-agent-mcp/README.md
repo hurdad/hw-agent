@@ -55,10 +55,16 @@ List tools:
 {"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
 ```
 
-Call `metrics.summary`:
+Call `metrics.summary` (reads RedisTimeSeries via hiredis):
 
 ```json
 {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"metrics.summary","arguments":{"filters":["cpu","memory"],"window":"5m"}}}
+```
+
+Call `metrics.timeseries.query` for explicit keys:
+
+```json
+{"jsonrpc":"2.0","id":31,"method":"tools/call","params":{"name":"metrics.timeseries.query","arguments":{"keys":["edge:node:raw:cpu","edge:node:risk:realtime_risk"],"window":"30s"}}}
 ```
 
 List resources:
@@ -74,3 +80,15 @@ Read a resource:
 ```
 
 Notifications are supported by omitting `id`; the server returns no response for notifications.
+
+## Redis connection configuration
+
+`hw-agent-mcp` reads Redis connection settings from environment variables:
+
+- `HW_AGENT_REDIS_HOST` (default `127.0.0.1`)
+- `HW_AGENT_REDIS_PORT` (default `6379`)
+- `HW_AGENT_REDIS_UNIX_SOCKET` (default empty)
+- `HW_AGENT_REDIS_PASSWORD` (default empty)
+- `HW_AGENT_REDIS_DB` (default `0`)
+- `HW_AGENT_REDIS_PREFIX` (default `edge:node`)
+- `HW_AGENT_REDIS_CONNECT_TIMEOUT_MS` (default `1000`)

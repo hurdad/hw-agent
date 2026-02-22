@@ -15,4 +15,5 @@ target_include_directories(hw-agent-mcp
 target_link_libraries(hw-agent-mcp
   PRIVATE
     nlohmann_json::nlohmann_json
+    hiredis::hiredis
 )
