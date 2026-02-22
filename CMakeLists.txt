@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(USE_NVML "Enable NVML GPU monitoring support" ON)
+option(BUILD_HW_AGENT "Build the hw_agent binary" ON)
+option(BUILD_HW_AGENT_MCP "Build the hw-agent-mcp binary" OFF)
 
 add_library(hiredis INTERFACE)
 add_library(hiredis::hiredis ALIAS hiredis)
@@ -37,44 +39,46 @@ if(USE_NVML)
   endif()
 endif()
 
-add_executable(hw_agent
-  src/main.cpp
-  src/core/agent.cpp
-  src/core/config.cpp
-  src/core/sampler.cpp
-  src/sensors/tegrastats.cpp
-  src/sensors/psi.cpp
-  src/sensors/cpu.cpp
-  src/sensors/interrupts.cpp
-  src/sensors/softirqs.cpp
-  src/sensors/cpufreq.cpp
-  src/sensors/thermal.cpp
-  src/sensors/power.cpp
-  src/sensors/memory.cpp
-  src/sensors/disk.cpp
-  src/sensors/network.cpp
-  src/sensors/gpu/gpu_nvml.cpp
-  src/sensors/gpu/gpu_none.cpp
-  src/derived/scheduler_pressure.cpp
-  src/derived/memory_pressure.cpp
-  src/derived/io_pressure.cpp
-  src/derived/thermal_pressure.cpp
-  src/derived/power_pressure.cpp
-  src/derived/latency_jitter.cpp
-  src/risk/realtime_risk.cpp
-  src/risk/saturation_risk.cpp
-  src/risk/system_state.cpp
-  src/sinks/redis_ts.cpp
-  src/sinks/stdout_debug.cpp
-)
+if(BUILD_HW_AGENT)
+  add_executable(hw_agent
+    src/main.cpp
+    src/core/agent.cpp
+    src/core/config.cpp
+    src/core/sampler.cpp
+    src/sensors/tegrastats.cpp
+    src/sensors/psi.cpp
+    src/sensors/cpu.cpp
+    src/sensors/interrupts.cpp
+    src/sensors/softirqs.cpp
+    src/sensors/cpufreq.cpp
+    src/sensors/thermal.cpp
+    src/sensors/power.cpp
+    src/sensors/memory.cpp
+    src/sensors/disk.cpp
+    src/sensors/network.cpp
+    src/sensors/gpu/gpu_nvml.cpp
+    src/sensors/gpu/gpu_none.cpp
+    src/derived/scheduler_pressure.cpp
+    src/derived/memory_pressure.cpp
+    src/derived/io_pressure.cpp
+    src/derived/thermal_pressure.cpp
+    src/derived/power_pressure.cpp
+    src/derived/latency_jitter.cpp
+    src/risk/realtime_risk.cpp
+    src/risk/saturation_risk.cpp
+    src/risk/system_state.cpp
+    src/sinks/redis_ts.cpp
+    src/sinks/stdout_debug.cpp
+  )
 
-target_include_directories(hw_agent PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(hw_agent PRIVATE yaml-cpp hiredis::hiredis ${CMAKE_DL_LIBS})
+  target_include_directories(hw_agent PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+  target_link_libraries(hw_agent PRIVATE yaml-cpp hiredis::hiredis ${CMAKE_DL_LIBS})
 
-if(HW_AGENT_HAVE_NVML)
-  target_compile_definitions(hw_agent PRIVATE HW_AGENT_HAVE_NVML)
-  target_include_directories(hw_agent PRIVATE ${NVML_INCLUDE_DIR})
-  target_link_libraries(hw_agent PRIVATE ${NVML_LIBRARY})
+  if(HW_AGENT_HAVE_NVML)
+    target_compile_definitions(hw_agent PRIVATE HW_AGENT_HAVE_NVML)
+    target_include_directories(hw_agent PRIVATE ${NVML_INCLUDE_DIR})
+    target_link_libraries(hw_agent PRIVATE ${NVML_LIBRARY})
+  endif()
 endif()
 
 
@@ -136,4 +140,6 @@ target_include_directories(hw_agent_sensors_unit_tests PRIVATE ${CMAKE_CURRENT_S
 
 add_test(NAME hw_agent_sensors_unit_tests COMMAND hw_agent_sensors_unit_tests)
 
-add_subdirectory(tools/hw-agent-mcp)
+if(BUILD_HW_AGENT_MCP)
+  add_subdirectory(tools/hw-agent-mcp)
+endif()
