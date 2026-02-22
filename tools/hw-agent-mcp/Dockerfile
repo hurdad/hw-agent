@@ -22,7 +22,7 @@ FROM ubuntu:24.04 AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
-    libhiredis0.14 \
+    libhiredis1.1.0 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /src/build/tools/hw-agent-mcp/hw-agent-mcp /usr/local/bin/hw-agent-mcp
