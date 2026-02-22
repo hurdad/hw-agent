@@ -71,12 +71,6 @@ std::vector<std::string> enabled_redis_metrics(const AgentConfig& config) {
     metrics.push_back("raw:tegra_gpu_temp");
     metrics.push_back("raw:tegra_gpu_power_mw");
   }
-  if (gpu_enabled) {
-    metrics.push_back("raw:gpu_mem_util");
-    metrics.push_back("raw:gpu_mem_free");
-    metrics.push_back("raw:gpu_clock_ratio");
-    metrics.push_back("raw:gpu_throttle");
-  }
   if (tegrastats_enabled) {
     metrics.push_back("raw:tegra_emc_util");
   }

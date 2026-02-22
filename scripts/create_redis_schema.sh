@@ -33,13 +33,13 @@ raw_fields=(
   power
   disk
   network
-  gpu_util
-  gpu_mem_util
-  gpu_mem_free
-  gpu_temp
-  gpu_clock_ratio
-  gpu_power_ratio
-  gpu_throttle
+  nvml_gpu_util
+  tegra_gpu_util
+  tegra_emc_util
+  nvml_gpu_temp
+  tegra_gpu_temp
+  nvml_gpu_power_ratio
+  tegra_gpu_power_mw
 )
 derived_fields=(scheduler_pressure memory_pressure io_pressure thermal_pressure power_pressure latency_jitter)
 risk_fields=(realtime_risk saturation_risk state)

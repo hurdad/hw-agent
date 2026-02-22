@@ -5,8 +5,6 @@ UNITLESS = "-"
 
 SECTION_SIGNAL_UNITS: dict[str, dict[str, str]] = {
     "raw": {
-        "gpu_mem_free": "MiB",
-        "gpu_temp": "°C",
         "nvml_gpu_temp": "°C",
         "tegra_gpu_temp": "°C",
         "tegra_gpu_power_mw": "mW",
@@ -38,16 +36,11 @@ def metric_unit(section: str, signal: str) -> str:
         "psi",
         "psi_memory",
         "psi_io",
-        "gpu_util",
         "nvml_gpu_util",
         "tegra_gpu_util",
-        "gpu_mem_util",
         "emc_util",
         "tegra_emc_util",
-        "gpu_clock_ratio",
-        "gpu_power_ratio",
         "nvml_gpu_power_ratio",
-        "gpu_throttle",
         "scheduler_pressure",
         "memory_pressure",
         "io_pressure",
