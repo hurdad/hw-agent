@@ -63,6 +63,7 @@ std::vector<std::string> enabled_redis_metrics(const AgentConfig& config) {
   const bool tegrastats_enabled = is_sensor_enabled(config, "tegrastats");
   if (gpu_enabled) {
     metrics.push_back("raw:nvml_gpu_util");
+    metrics.push_back("raw:gpu_mem_util");
     metrics.push_back("raw:nvml_gpu_temp");
     metrics.push_back("raw:nvml_gpu_power_ratio");
   }

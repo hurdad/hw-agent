@@ -17,7 +17,7 @@
 namespace hw_agent::sinks {
 namespace {
 
-constexpr std::size_t kMetricCountBase = 28;
+constexpr std::size_t kMetricCountBase = 29;
 constexpr std::size_t kMetricCountHealth = 7;
 constexpr std::size_t kMaxMetricCount = kMetricCountBase + kMetricCountHealth;
 constexpr std::size_t kMaxCommandArgCount = 1 + (kMaxMetricCount * 3);
@@ -48,6 +48,7 @@ const std::vector<std::string>& default_metric_suffixes() {
       "raw:disk",
       "raw:network",
       "raw:nvml_gpu_util",
+      "raw:gpu_mem_util",
       "raw:tegra_emc_util",
       "raw:nvml_gpu_temp",
       "raw:nvml_gpu_power_ratio",
@@ -258,6 +259,7 @@ bool RedisTsSink::publish_impl(model::signal_frame& frame) {
   append_metric("raw:disk", sanitize_value(frame.disk));
   append_metric("raw:network", sanitize_value(frame.network));
   append_metric("raw:nvml_gpu_util", sanitize_value(frame.nvml_gpu_util));
+  append_metric("raw:gpu_mem_util", sanitize_value(frame.gpu_mem_util));
   append_metric("raw:tegra_emc_util", sanitize_value(frame.tegra_emc_util));
   append_metric("raw:nvml_gpu_temp", sanitize_value(frame.nvml_gpu_temp));
   append_metric("raw:nvml_gpu_power_ratio", sanitize_value(frame.nvml_gpu_power_ratio));
